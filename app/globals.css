@@ -54,3 +54,8 @@ body {
   outline: 2px solid var(--color-interactive);
   outline-offset: 2px;
 }
+
+/* SearchBar renders its own clear button; suppress the native one. */
+input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}
