@@ -10,6 +10,16 @@ layer (`lib/mock-data.ts`) shaped to match the REST API Task 2 will
 provide, so wiring in the real backend later is a drop-in swap of the
 fetch functions, not a rewrite of any component.
 
+## Demo
+
+- **Demo video**: _add link here after recording_ — see `DEMO_SCRIPT.md`
+  for the shot list (2–5 min, per the internship's Demo Video
+  Requirements).
+- **Live deployment**: not deployed for this task — optional per the
+  submission requirements. `npm run build && npm run start` runs the
+  production build locally; any of Vercel/Netlify/Render would work
+  as-is with zero configuration (no environment variables to set).
+
 ## Screenshots
 
 | Dashboard (desktop) | Dashboard (mobile) |
