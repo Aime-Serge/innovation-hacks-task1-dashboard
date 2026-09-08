@@ -6,6 +6,7 @@
  * the surface a developer already sits in front of all day.
  */
 :root {
+  color-scheme: dark;
   --color-canvas: #1b1f24;
   --color-surface: #242a31;
   --color-text-primary: #e6e9ec;

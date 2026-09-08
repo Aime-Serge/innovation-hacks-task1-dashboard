@@ -1,20 +1,37 @@
 import type { Project, Task } from "@/lib/types";
+import { Skeleton } from "@/components/shared/Skeleton";
+import { ErrorState } from "@/components/shared/ErrorState";
 
 export function StatsStrip({
   status,
   projects,
   tasks,
+  onRetry,
 }: {
   status: "loading" | "error" | "success";
   projects: Project[];
   tasks: Task[];
+  onRetry: () => void;
 }) {
   if (status === "loading") {
-    return <p className="text-sm text-text-secondary">Loading activity…</p>;
+    return (
+      <div aria-busy="true" aria-label="Loading activity" className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="rounded border border-border-hairline bg-surface px-4 py-3">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="mt-2 h-6 w-10" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (status === "error") {
-    return <p className="text-sm text-status-blocked">Unable to load activity.</p>;
+    return <ErrorState message="Unable to load activity." onRetry={onRetry} />;
+  }
+
+  if (tasks.length === 0 && projects.length === 0) {
+    return <p className="text-sm text-text-secondary">No activity yet.</p>;
   }
 
   const stats = [
@@ -23,10 +40,6 @@ export function StatsStrip({
     { label: "In progress", value: tasks.filter((t) => t.status === "in-progress").length },
     { label: "Blocked", value: tasks.filter((t) => t.status === "blocked").length },
   ];
-
-  if (tasks.length === 0 && projects.length === 0) {
-    return <p className="text-sm text-text-secondary">No activity yet.</p>;
-  }
 
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -1,27 +1,68 @@
 import type { Project, Task } from "@/lib/types";
 import { TaskCard } from "./TaskCard";
+import { Skeleton } from "@/components/shared/Skeleton";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { ErrorState } from "@/components/shared/ErrorState";
+
+function TaskRowSkeleton() {
+  return (
+    <li className="flex items-center justify-between gap-4 border-b border-border-hairline px-4 py-3 last:border-b-0">
+      <Skeleton className="h-4 w-1/2" />
+      <div className="flex gap-4">
+        <Skeleton className="h-3 w-16" />
+        <Skeleton className="h-3 w-20" />
+        <Skeleton className="h-3 w-12" />
+      </div>
+    </li>
+  );
+}
 
 export function TaskList({
   status,
   tasks,
   projects,
   showProjectName = false,
+  filtered,
+  onRetry,
+  onClearFilters,
 }: {
   status: "loading" | "error" | "success";
   tasks: Task[];
   projects: Project[];
   showProjectName?: boolean;
+  filtered?: boolean;
+  onRetry: () => void;
+  onClearFilters?: () => void;
 }) {
   if (status === "loading") {
-    return <p className="text-sm text-text-secondary">Loading tasks…</p>;
+    return (
+      <ul
+        aria-busy="true"
+        aria-label="Loading tasks"
+        className="rounded border border-border-hairline bg-surface"
+      >
+        {Array.from({ length: 5 }).map((_, i) => (
+          <TaskRowSkeleton key={i} />
+        ))}
+      </ul>
+    );
   }
 
   if (status === "error") {
-    return <p className="text-sm text-status-blocked">Unable to load tasks.</p>;
+    return <ErrorState message="Unable to load tasks." onRetry={onRetry} />;
   }
 
   if (tasks.length === 0) {
-    return <p className="text-sm text-text-secondary">No tasks match your filters.</p>;
+    return filtered ? (
+      <EmptyState
+        title="No tasks match your filters"
+        message="Try a different search term or clear your filters."
+        actionLabel={onClearFilters ? "Clear filters" : undefined}
+        onAction={onClearFilters}
+      />
+    ) : (
+      <EmptyState title="No tasks yet" message="Tasks you create will show up here." />
+    );
   }
 
   const projectNameById = new Map(projects.map((p) => [p.id, p.name]));
