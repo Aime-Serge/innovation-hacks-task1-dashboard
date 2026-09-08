@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ProfileMenu } from "./ProfileMenu";
 
 export function NavBar() {
   const pathname = usePathname();
@@ -42,6 +43,7 @@ export function NavBar() {
             Dashboard
           </Link>
         </div>
+        <ProfileMenu />
       </nav>
     </header>
   );
