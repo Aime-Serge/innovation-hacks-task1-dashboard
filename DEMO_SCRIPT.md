@@ -7,7 +7,7 @@ quick resize/DevTools pass for the responsive beat.
 
 | Time | Beat | Say | Show |
 | --- | --- | --- | --- |
-| 0:00–0:15 | Cold open — app running end-to-end | "This is a Developer Productivity Dashboard — an at-a-glance status check for a developer's own projects and tasks, built with Next.js, TypeScript, and Tailwind." | Dashboard already loaded at `localhost:3000`, full page visible. |
+| 0:00–0:15 | Cold open — app running end-to-end | "This is a Developer Productivity Dashboard — see where every project stands, at a glance. Built with Next.js, TypeScript, and Tailwind." | Dashboard already loaded at `localhost:3000`, full page visible. |
 | 0:15–0:45 | Main features, part 1 — dashboard | "The activity strip up top gives open/blocked/in-progress counts. Each project card shows a segmented progress bar computed from its own tasks — no separate progress field, it's derived live." | Point at StatsStrip, hover/scroll across the three ProjectCards. |
 | 0:45–1:15 | Main features, part 2 — search & filter | "Search matches project names and task titles together. The status chips narrow the task list — watch: filtering to Blocked leaves the project grid untouched, since projects don't have a status of their own." | Type a search term, clear it, click the "Blocked" chip, point out the task list narrows while ProjectGrid doesn't. |
 | 1:15–1:45 | Main features, part 3 — navigation | "Clicking a project card goes to its own detail page — same TaskList and ProgressBar components, just scoped to one project's tasks." | Click "Atlas API Gateway", show the detail page, click "← Dashboard" to return. |
