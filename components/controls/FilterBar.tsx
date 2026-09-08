@@ -20,7 +20,7 @@ export function FilterBar({
     <div
       role="group"
       aria-label="Filter tasks by status"
-      className="flex flex-wrap gap-2 overflow-x-auto"
+      className="flex flex-wrap gap-2"
     >
       <button
         type="button"
