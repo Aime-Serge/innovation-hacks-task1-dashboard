@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Project, ProjectProgress } from "@/lib/types";
+import { ProgressBar } from "@/components/shared/ProgressBar";
 
 export function ProjectCard({
   project,
@@ -16,9 +17,9 @@ export function ProjectCard({
       >
         <h3 className="truncate text-sm font-semibold text-text-primary">{project.name}</h3>
         <p className="mt-1 line-clamp-2 text-xs text-text-secondary">{project.description}</p>
-        <p className="mt-3 font-mono text-xs text-text-secondary">
-          {progress.done}/{progress.total} tasks done
-        </p>
+        <div className="mt-3">
+          <ProgressBar progress={progress} />
+        </div>
       </Link>
     </li>
   );
