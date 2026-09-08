@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Developer Productivity Dashboard",
-  description: "At-a-glance status for your projects and tasks.",
+  description: "See where every project stands, at a glance.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

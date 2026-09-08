@@ -22,6 +22,10 @@ describe("TaskCard", () => {
     );
     expect(screen.getByText(task.title)).toBeInTheDocument();
     expect(screen.getByText("In progress")).toBeInTheDocument();
+    // Visible text is short ("High"); a visually-hidden sr-only span
+    // carries the full "High priority" phrase so screen readers don't
+    // lose meaning outside the row's visual context.
+    expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("High priority")).toBeInTheDocument();
     expect(screen.getByText("Sep 10")).toBeInTheDocument();
   });

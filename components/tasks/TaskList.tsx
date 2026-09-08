@@ -55,13 +55,13 @@ export function TaskList({
   if (tasks.length === 0) {
     return filtered ? (
       <EmptyState
-        title="No tasks match your filters"
+        title="No matching tasks"
         message="Try a different search term or clear your filters."
         actionLabel={onClearFilters ? "Clear filters" : undefined}
         onAction={onClearFilters}
       />
     ) : (
-      <EmptyState title="No tasks yet" message="Tasks you create will show up here." />
+      <EmptyState title="No tasks yet" message="No tasks to show right now." />
     );
   }
 

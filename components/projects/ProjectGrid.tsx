@@ -49,13 +49,13 @@ export function ProjectGrid({
   if (projects.length === 0) {
     return filtered ? (
       <EmptyState
-        title="No projects match your filters"
+        title="No matching projects"
         message="Try a different search term or clear your filters."
         actionLabel={onClearFilters ? "Clear filters" : undefined}
         onAction={onClearFilters}
       />
     ) : (
-      <EmptyState title="No projects yet" message="Projects you create will show up here." />
+      <EmptyState title="No projects yet" message="No projects to show right now." />
     );
   }
 
