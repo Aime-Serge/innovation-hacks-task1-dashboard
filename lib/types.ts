@@ -4,7 +4,7 @@ export type Priority = "low" | "medium" | "high";
 export interface Project {
   id: string;
   name: string;
-  description: string;
+  description: string | null;
   createdAt: string;
 }
 
@@ -12,9 +12,11 @@ export interface Task {
   id: string;
   projectId: string;
   title: string;
+  description?: string | null;
   status: TaskStatus;
   priority: Priority;
   dueDate: string | null;
+  assigneeId?: string | null;
   createdAt: string;
 }
 

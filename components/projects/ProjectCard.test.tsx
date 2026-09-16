@@ -18,7 +18,7 @@ describe("ProjectCard", () => {
       </ul>,
     );
     expect(screen.getByText(project.name)).toBeInTheDocument();
-    expect(screen.getByText(project.description)).toBeInTheDocument();
+    expect(screen.getByText(project.description!)).toBeInTheDocument();
     expect(screen.getByText("1/4 done")).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAttribute("href", "/projects/proj-atlas");
   });

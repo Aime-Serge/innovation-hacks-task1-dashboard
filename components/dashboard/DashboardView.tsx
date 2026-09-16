@@ -15,11 +15,13 @@ import { ProjectGrid } from "@/components/projects/ProjectGrid";
 import { TaskList } from "@/components/tasks/TaskList";
 import { SearchBar } from "@/components/controls/SearchBar";
 import { FilterBar } from "@/components/controls/FilterBar";
+import { ProjectFormModal } from "@/components/projects/ProjectFormModal";
 
 export function DashboardView() {
   const [simulateError, setSimulateError] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<TaskStatus | null>(null);
+  const [creatingProject, setCreatingProject] = useState(false);
 
   const projectsState = useAsync(() => fetchProjects({ simulateError }), [simulateError]);
   const tasksState = useAsync(() => fetchTasks(undefined, { simulateError }), [simulateError]);
@@ -64,16 +66,25 @@ export function DashboardView() {
             See where every project stands, at a glance.
           </p>
         </div>
-        {process.env.NODE_ENV !== "production" && (
-          <label className="flex items-center gap-2 rounded border border-border-hairline px-2.5 py-1.5 text-xs text-text-secondary">
-            <input
-              type="checkbox"
-              checked={simulateError}
-              onChange={(e) => setSimulateError(e.target.checked)}
-            />
-            Simulate error (dev only)
-          </label>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {process.env.NODE_ENV !== "production" && (
+            <label className="flex items-center gap-2 rounded border border-border-hairline px-2.5 py-1.5 text-xs text-text-secondary">
+              <input
+                type="checkbox"
+                checked={simulateError}
+                onChange={(e) => setSimulateError(e.target.checked)}
+              />
+              Simulate error (dev only)
+            </label>
+          )}
+          <button
+            type="button"
+            onClick={() => setCreatingProject(true)}
+            className="rounded bg-interactive px-3 py-1.5 text-sm font-medium text-canvas"
+          >
+            New Project
+          </button>
+        </div>
       </div>
 
       <section aria-label="Activity summary" className="mt-6">
@@ -122,6 +133,16 @@ export function DashboardView() {
           />
         </div>
       </section>
+
+      {creatingProject && (
+        <ProjectFormModal
+          onClose={() => setCreatingProject(false)}
+          onSaved={() => {
+            setCreatingProject(false);
+            projectsState.retry();
+          }}
+        />
+      )}
     </div>
   );
 }
