@@ -41,9 +41,9 @@ const tasks: Task[] = [
 
 const currentUser: User = {
   id: "user-1",
-  name: "Serge Irakoze",
+  name: "Aime Serge UKOBIZABA",
   role: "Backend Engineer",
-  initials: "SI",
+  initials: "ASU",
 };
 
 const users: User[] = [
