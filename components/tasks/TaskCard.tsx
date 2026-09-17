@@ -107,6 +107,7 @@ export function TaskCard({
               <button
                 type="button"
                 onClick={onEdit}
+                aria-label={`Edit "${task.title}"`}
                 className="text-text-secondary hover:text-text-primary"
               >
                 Edit
@@ -116,6 +117,7 @@ export function TaskCard({
               <button
                 type="button"
                 onClick={onDelete}
+                aria-label={`Delete "${task.title}"`}
                 className="text-status-blocked hover:underline"
               >
                 Delete

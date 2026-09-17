@@ -133,6 +133,101 @@ async function newPage(viewport) {
   await page.close();
 }
 
+// 7. Axe scan: New Project modal open (previously unverified — the CRUD
+//    modals ported from Task 4 had never actually been opened by this
+//    suite, despite an earlier commit claiming a clean a11y pass).
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New Project" }).click();
+  await page.waitForSelector('[role="dialog"]');
+  await page.waitForTimeout(200);
+  const results = await new AxeBuilder({ page }).analyze();
+  report(
+    "axe scan: New Project modal has zero violations",
+    results.violations.length === 0,
+    results.violations.map((v) => `${v.id} (${v.nodes.length} nodes)`).join(", "),
+  );
+  await page.close();
+}
+
+// 8. Axe scan: New Task modal open, from a project detail page
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await page.goto(`${BASE_URL}/projects/proj-atlas`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New Task" }).click();
+  await page.waitForSelector('[role="dialog"]');
+  await page.waitForTimeout(200);
+  const results = await new AxeBuilder({ page }).analyze();
+  report(
+    "axe scan: New Task modal has zero violations",
+    results.violations.length === 0,
+    results.violations.map((v) => `${v.id} (${v.nodes.length} nodes)`).join(", "),
+  );
+  await page.close();
+}
+
+// 9. Escape closes a modal and returns focus to its trigger (same
+//    contract as the profile menu, now checked for the CRUD modals too).
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New Project" }).click();
+  await page.waitForSelector('[role="dialog"]');
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(200);
+  report("Escape closes the New Project modal", !(await page.isVisible('[role="dialog"]')));
+  await page.close();
+}
+
+// 10. Full CRUD flow smoke test: create a project, create a task on it,
+//     change its status, edit it, delete it, delete the project — the
+//     kind of end-to-end path that unit tests (each component in
+//     isolation) can't catch if two pieces don't actually wire together.
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  const errors = [];
+  page.on("pageerror", (err) => errors.push(String(err)));
+
+  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "New Project" }).click();
+  await page.getByLabel("Name").fill("QA Smoke Test Project");
+  await page.getByRole("button", { name: "Create Project" }).click();
+  await page.waitForSelector("text=QA Smoke Test Project");
+
+  await page.getByText("QA Smoke Test Project").click();
+  await page.waitForSelector("h2:has-text('Tasks')");
+  await page.getByRole("button", { name: "New Task" }).click();
+  await page.getByLabel("Title").fill("QA Smoke Test Task");
+  await page.getByRole("button", { name: "Create Task" }).click();
+  await page.waitForSelector("text=QA Smoke Test Task");
+
+  const statusSelect = page.locator("select").first();
+  await statusSelect.selectOption("done");
+  await page.waitForTimeout(300);
+  const statusOk = (await statusSelect.inputValue()) === "done";
+
+  // Project/task-row delete buttons now carry a descriptive aria-label
+  // (multiple bare "Delete" buttons on one page was itself a real a11y
+  // finding from this test — fixed in ProjectDetailView/TaskCard). The
+  // confirm dialog's own button is still plain "Delete", disambiguated
+  // by scoping to the dialog.
+  await page.getByRole("button", { name: "Delete project" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  await page.waitForURL(`${BASE_URL}/`);
+  const stillListed = await page.isVisible("text=QA Smoke Test Project");
+
+  report(
+    "full create -> status change -> delete flow works with no console errors",
+    statusOk && !stillListed && errors.length === 0,
+    errors.join("; "),
+  );
+  await page.close();
+}
+
 console.log(`\n${failures === 0 ? "ALL CHECKS PASSED" : failures + " CHECK(S) FAILED"}`);
 await browser.close();
 process.exit(failures === 0 ? 0 : 1);

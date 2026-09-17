@@ -90,6 +90,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                 <button
                   type="button"
                   onClick={() => setEditingProject(true)}
+                  aria-label={`Edit project "${project.name}"`}
                   className="rounded border border-border-hairline px-3 py-1.5 text-sm font-medium text-text-primary hover:border-interactive"
                 >
                   Edit
@@ -97,6 +98,7 @@ export function ProjectDetailView({ projectId }: { projectId: string }) {
                 <button
                   type="button"
                   onClick={() => setDeletingProject(true)}
+                  aria-label={`Delete project "${project.name}"`}
                   className="rounded border border-border-hairline px-3 py-1.5 text-sm font-medium text-status-blocked hover:border-status-blocked"
                 >
                   Delete
