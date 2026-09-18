@@ -1,11 +1,48 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchCurrentUser } from "@/lib/mock-data";
-import { useAsync } from "@/lib/useAsync";
+import Link from "next/link";
+import { useAuth } from "@/lib/auth-context";
+import { getAvatarDataUrl } from "@/lib/mock-auth";
+
+export function Avatar({
+  userId,
+  hasAvatar,
+  initials,
+  size = 32,
+}: {
+  userId: string;
+  hasAvatar: boolean;
+  initials: string;
+  size?: number;
+}) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const dataUrl = hasAvatar ? getAvatarDataUrl(userId) : null;
+  const showImage = hasAvatar && dataUrl && !imageFailed;
+
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface font-mono text-xs font-semibold text-text-primary"
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+    >
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={dataUrl}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        initials
+      )}
+    </span>
+  );
+}
 
 export function ProfileMenu() {
-  const { status, data: user } = useAsync(() => fetchCurrentUser(), []);
+  const { status, user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -40,9 +77,9 @@ export function ProfileMenu() {
     );
   }
 
-  const initials = status === "success" && user ? user.initials : "?";
-  const displayName = status === "success" && user ? user.name : "Unknown user";
-  const role = status === "success" && user ? user.role : "—";
+  if (status === "unauthenticated" || !user) {
+    return null;
+  }
 
   return (
     <div className="relative" ref={containerRef}>
@@ -54,14 +91,9 @@ export function ProfileMenu() {
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-2 rounded px-1.5 py-1 hover:bg-surface"
       >
-        <span
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-surface font-mono text-xs font-semibold text-text-primary"
-          aria-hidden="true"
-        >
-          {initials}
-        </span>
+        <Avatar userId={user.id} hasAvatar={user.hasAvatar} initials={user.initials} size={32} />
         <span className="hidden text-sm font-medium text-text-primary sm:block">
-          {displayName}
+          {user.name}
         </span>
       </button>
       {open && (
@@ -71,19 +103,24 @@ export function ProfileMenu() {
           className="absolute right-0 top-full mt-2 w-56 rounded border border-border-hairline bg-surface p-1 shadow-none"
         >
           <div className="px-3 py-2 border-b border-border-hairline">
-            <p className="text-sm font-medium text-text-primary">{displayName}</p>
-            <p className="text-xs text-text-secondary">{role}</p>
+            <p className="text-sm font-medium text-text-primary">{user.name}</p>
+            <p className="text-xs text-text-secondary">{user.role}</p>
           </div>
-          <button
+          <Link
+            href="/settings"
             role="menuitem"
-            type="button"
-            className="w-full rounded px-3 py-2 text-left text-sm text-text-secondary hover:bg-canvas hover:text-text-primary"
+            onClick={() => setOpen(false)}
+            className="block w-full rounded px-3 py-2 text-left text-sm text-text-secondary hover:bg-canvas hover:text-text-primary"
           >
             Settings
-          </button>
+          </Link>
           <button
             role="menuitem"
             type="button"
+            onClick={() => {
+              setOpen(false);
+              logout();
+            }}
             className="w-full rounded px-3 py-2 text-left text-sm text-text-secondary hover:bg-canvas hover:text-text-primary"
           >
             Sign out
