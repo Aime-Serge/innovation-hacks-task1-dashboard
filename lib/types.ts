@@ -29,6 +29,8 @@ export interface ProjectProgress {
 export interface User {
   id: string;
   name: string;
+  email: string;
   role: string;
   initials: string;
+  hasAvatar: boolean;
 }

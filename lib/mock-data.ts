@@ -42,14 +42,30 @@ const tasks: Task[] = [
 const currentUser: User = {
   id: "user-1",
   name: "Aime Serge UKOBIZABA",
+  email: "aime.serge@example.com",
   role: "Backend Engineer",
   initials: "ASU",
+  hasAvatar: false,
 };
 
 const users: User[] = [
   currentUser,
-  { id: "user-2", name: "Amara Diallo", role: "Frontend Engineer", initials: "AD" },
-  { id: "user-3", name: "Kwame Mensah", role: "QA Engineer", initials: "KM" },
+  {
+    id: "user-2",
+    name: "Amara Diallo",
+    email: "amara.diallo@example.com",
+    role: "Frontend Engineer",
+    initials: "AD",
+    hasAvatar: false,
+  },
+  {
+    id: "user-3",
+    name: "Kwame Mensah",
+    email: "kwame.mensah@example.com",
+    role: "QA Engineer",
+    initials: "KM",
+    hasAvatar: false,
+  },
 ];
 
 function delay<T>(value: T, ms = 500): Promise<T> {
