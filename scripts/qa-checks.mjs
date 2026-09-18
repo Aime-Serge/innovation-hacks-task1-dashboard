@@ -25,10 +25,92 @@ async function newPage(viewport) {
   return context.newPage();
 }
 
-// 1. Axe scan: dashboard
+// Every check below needs its own fresh browser context (for a clean
+// a11y/responsive scan), which means a fresh localStorage too — the
+// dashboard is now behind the mock auth gate, so each context logs in
+// with the seeded demo account before touching a protected page.
+async function loginAsSeedUser(page) {
+  await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+  await page.fill("#email", "aime.serge@example.com");
+  await page.fill("#password", "password123");
+  await page.click('button[type="submit"]');
+  await page.waitForURL(`${BASE_URL}/`, { timeout: 10000 });
+  // Login is a client-side navigation (router.push): the browser's
+  // sequential focus-navigation starting point stays anchored near the
+  // just-clicked (and now-unmounted) submit button rather than resetting
+  // to the top of the document the way a real page load would — merely
+  // blurring the element doesn't fix this. A reload gives later
+  // Tab-order checks the same clean starting point a user opening this
+  // URL fresh (or reloading after login) would actually have.
+  await page.reload({ waitUntil: "networkidle" });
+}
+
+// 1. Axe scan: login page (unauthenticated, public)
 {
   const page = await newPage({ width: 1280, height: 900 });
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+  await page.waitForSelector("h1:has-text('Log in')");
+  const results = await new AxeBuilder({ page }).analyze();
+  report(
+    "axe scan: login page has zero violations",
+    results.violations.length === 0,
+    results.violations.map((v) => `${v.id} (${v.nodes.length} nodes)`).join(", "),
+  );
+  await page.close();
+}
+
+// 2. Axe scan: register page
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await page.goto(`${BASE_URL}/register`, { waitUntil: "networkidle" });
+  await page.waitForSelector("h1:has-text('Create an account')");
+  const results = await new AxeBuilder({ page }).analyze();
+  report(
+    "axe scan: register page has zero violations",
+    results.violations.length === 0,
+    results.violations.map((v) => `${v.id} (${v.nodes.length} nodes)`).join(", "),
+  );
+  await page.close();
+}
+
+// 3. Axe scan: forgot-password page
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await page.goto(`${BASE_URL}/forgot-password`, { waitUntil: "networkidle" });
+  await page.waitForSelector("h1:has-text('Reset your password')");
+  const results = await new AxeBuilder({ page }).analyze();
+  report(
+    "axe scan: forgot-password page has zero violations",
+    results.violations.length === 0,
+    results.violations.map((v) => `${v.id} (${v.nodes.length} nodes)`).join(", "),
+  );
+  await page.close();
+}
+
+// 4. Keyboard: Tab order on the login form reaches "Forgot password?"
+//    before the submit button.
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await page.goto(`${BASE_URL}/login`, { waitUntil: "networkidle" });
+  await page.focus("#email");
+  await page.keyboard.press("Tab"); // -> password
+  await page.keyboard.press("Tab"); // -> Forgot password? link
+  const onForgotLink = await page.evaluate(() => document.activeElement?.textContent);
+  report(
+    "Tab order reaches 'Forgot password?' after the password field",
+    onForgotLink === "Forgot password?",
+    `got: ${onForgotLink}`,
+  );
+  await page.keyboard.press("Tab"); // -> submit button
+  const onSubmit = await page.evaluate(() => document.activeElement?.getAttribute("type"));
+  report("Tab order then reaches the submit button", onSubmit === "submit", `got: ${onSubmit}`);
+  await page.close();
+}
+
+// 5. Axe scan: dashboard
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await loginAsSeedUser(page);
   await page.waitForSelector("text=Dashboard");
   await page.waitForTimeout(1000);
   const results = await new AxeBuilder({ page }).analyze();
@@ -40,9 +122,10 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 2. Axe scan: project detail
+// 6. Axe scan: project detail
 {
   const page = await newPage({ width: 1280, height: 900 });
+  await loginAsSeedUser(page);
   await page.goto(`${BASE_URL}/projects/proj-atlas`, { waitUntil: "networkidle" });
   await page.waitForSelector("h2:has-text('Tasks')");
   await page.waitForTimeout(800);
@@ -55,11 +138,28 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 3. Nonexistent project id doesn't crash
+// 7. Axe scan: settings page
+{
+  const page = await newPage({ width: 1280, height: 900 });
+  await loginAsSeedUser(page);
+  await page.goto(`${BASE_URL}/settings`, { waitUntil: "networkidle" });
+  await page.waitForSelector("h1:has-text('Settings')");
+  await page.waitForTimeout(500);
+  const results = await new AxeBuilder({ page }).analyze();
+  report(
+    "axe scan: settings page has zero violations",
+    results.violations.length === 0,
+    results.violations.map((v) => `${v.id} (${v.nodes.length} nodes)`).join(", "),
+  );
+  await page.close();
+}
+
+// 8. Nonexistent project id doesn't crash
 {
   const page = await newPage({ width: 1280, height: 900 });
   const errors = [];
   page.on("pageerror", (err) => errors.push(String(err)));
+  await loginAsSeedUser(page);
   await page.goto(`${BASE_URL}/projects/does-not-exist`, { waitUntil: "networkidle" });
   await page.waitForTimeout(800);
   const text = await page.textContent("body");
@@ -71,11 +171,11 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 4. Keyboard: Tab reaches the profile menu, Enter opens it, Escape closes
+// 9. Keyboard: Tab reaches the profile menu, Enter opens it, Escape closes
 //    it and returns focus to the trigger.
 {
   const page = await newPage({ width: 1280, height: 900 });
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await loginAsSeedUser(page);
   await page.waitForSelector("text=Dashboard");
   await page.waitForTimeout(800);
   // skip-link -> logo link -> Dashboard link -> profile trigger
@@ -96,10 +196,10 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 5. Responsive: no horizontal scroll at 375px
+// 10. Responsive: no horizontal scroll at 375px
 {
   const page = await newPage({ width: 375, height: 900 });
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await loginAsSeedUser(page);
   await page.waitForSelector("text=Dashboard");
   await page.waitForTimeout(800);
   const hScroll = await page.evaluate(
@@ -109,13 +209,13 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 6. Truncation stress test: a pathologically long, unbreakable title
-//    must not blow out the layout (real bug class: truncate/line-clamp
-//    classes present in JSX but not actually effective, e.g. a missing
-//    min-w-0 on a flex ancestor).
+// 11. Truncation stress test: a pathologically long, unbreakable title
+//     must not blow out the layout (real bug class: truncate/line-clamp
+//     classes present in JSX but not actually effective, e.g. a missing
+//     min-w-0 on a flex ancestor).
 {
   const page = await newPage({ width: 375, height: 900 });
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await loginAsSeedUser(page);
   await page.waitForSelector("text=Dashboard");
   await page.waitForTimeout(800);
   await page.evaluate(() => {
@@ -133,12 +233,10 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 7. Axe scan: New Project modal open (previously unverified — the CRUD
-//    modals ported from Task 4 had never actually been opened by this
-//    suite, despite an earlier commit claiming a clean a11y pass).
+// 12. Axe scan: New Project modal open
 {
   const page = await newPage({ width: 1280, height: 900 });
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await loginAsSeedUser(page);
   await page.getByRole("button", { name: "New Project" }).click();
   await page.waitForSelector('[role="dialog"]');
   await page.waitForTimeout(200);
@@ -151,9 +249,10 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 8. Axe scan: New Task modal open, from a project detail page
+// 13. Axe scan: New Task modal open, from a project detail page
 {
   const page = await newPage({ width: 1280, height: 900 });
+  await loginAsSeedUser(page);
   await page.goto(`${BASE_URL}/projects/proj-atlas`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "New Task" }).click();
   await page.waitForSelector('[role="dialog"]');
@@ -167,11 +266,11 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 9. Escape closes a modal and returns focus to its trigger (same
-//    contract as the profile menu, now checked for the CRUD modals too).
+// 14. Escape closes a modal and returns focus to its trigger (same
+//     contract as the profile menu, checked for the CRUD modals too).
 {
   const page = await newPage({ width: 1280, height: 900 });
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await loginAsSeedUser(page);
   await page.getByRole("button", { name: "New Project" }).click();
   await page.waitForSelector('[role="dialog"]');
   await page.keyboard.press("Escape");
@@ -180,7 +279,7 @@ async function newPage(viewport) {
   await page.close();
 }
 
-// 10. Full CRUD flow smoke test: create a project, create a task on it,
+// 15. Full CRUD flow smoke test: create a project, create a task on it,
 //     change its status, edit it, delete it, delete the project — the
 //     kind of end-to-end path that unit tests (each component in
 //     isolation) can't catch if two pieces don't actually wire together.
@@ -189,7 +288,7 @@ async function newPage(viewport) {
   const errors = [];
   page.on("pageerror", (err) => errors.push(String(err)));
 
-  await page.goto(`${BASE_URL}/`, { waitUntil: "networkidle" });
+  await loginAsSeedUser(page);
   await page.getByRole("button", { name: "New Project" }).click();
   await page.getByLabel("Name").fill("QA Smoke Test Project");
   await page.getByRole("button", { name: "Create Project" }).click();
