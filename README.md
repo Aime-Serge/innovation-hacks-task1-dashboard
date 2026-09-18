@@ -34,16 +34,33 @@ fetch functions, not a rewrite of any component.
 | --- | --- | --- |
 | ![Loading state](docs/screenshots/05-loading-state.png) | ![Empty state](docs/screenshots/06-empty-state.png) | ![Error state](docs/screenshots/07-error-state.png) |
 
+| Login | Register | Settings |
+| --- | --- | --- |
+| ![Login](docs/screenshots/08-login-desktop.png) | ![Register](docs/screenshots/09-register-desktop.png) | ![Settings](docs/screenshots/10-settings-desktop.png) |
+
 ## Feature list
 
+- **Mock authentication & profile** (`/login`, `/register`,
+  `/forgot-password`, `/reset-password`, `/settings`) — a full auth UX
+  with no real backend behind it: register/login/logout, forgot/reset
+  password (the reset link is shown directly on screen instead of being
+  emailed — see [Known gaps](#known-gaps--assumptions)), edit profile,
+  change password, avatar upload/remove, and account deletion, all
+  against an in-memory account store persisted to `localStorage`
+  (`lib/mock-auth.ts`). Every other route requires this mock session;
+  `proxy.ts` (Next 16's renamed `middleware.ts`) redirects unauthenticated
+  visits to `/login`.
 - **Dashboard home** (`/`) — the primary landing view: activity summary,
   project grid, and a cross-project "My tasks" list.
 - **Project detail** (`/projects/:id`) — a project's own task list, so
   clicking a project card goes somewhere real instead of a dead link.
 - **Navigation** — persistent nav bar with a skip-to-content link, a
-  non-color-only active-route indicator, and a profile menu.
+  non-color-only active-route indicator, a profile menu, and a footer
+  with copyright, tech-stack credit, and links to the repo and Innovation
+  Hacks.
 - **Profile section** — avatar/name in the nav, expandable dropdown,
-  keyboard-dismissible (Escape, click-outside).
+  keyboard-dismissible (Escape, click-outside), with a working Settings
+  link and Sign out action.
 - **Project & task cards** — one shared visual system (spacing, corner
   radius, hairline border) driven by CSS custom-property design tokens,
   not per-component styling.
@@ -113,17 +130,32 @@ npm run test    # component test suite (Vitest)
 None required. This build has no real backend or third-party services —
 `lib/mock-data.ts` simulates network latency and can simulate a failure
 via a dev-only "Simulate error" toggle on the dashboard (stripped from
-production builds via a `NODE_ENV` check). A `.env.example` will be
+production builds via a `NODE_ENV` check), and `lib/mock-auth.ts` mocks
+the entire auth/profile system the same way. A `.env.example` will be
 added once Task 2's API introduces a base URL to configure.
+
+### Demo account
+
+A seeded account is always available on a fresh browser profile:
+`aime.serge@example.com` / `password123` (shown on the login page
+itself). Registering a new account works too — it's saved to
+`localStorage`, so it survives reloads within the same browser.
 
 ## Project structure
 
 ```
 app/                       Routes (App Router)
-  page.tsx                 Dashboard home
-  projects/[id]/page.tsx   Project detail
+  page.tsx                 Dashboard home (protected)
+  projects/[id]/page.tsx   Project detail (protected)
+  login/, register/        Auth entry points
+  forgot-password/,
+  reset-password/          Mocked password-reset flow
+  settings/                Profile, avatar, change password, delete account
+proxy.ts                   Route-protection gate (Next 16's renamed middleware.ts)
 components/
-  nav/                     NavBar, ProfileMenu
+  nav/                     NavBar, ProfileMenu (+ Avatar), Footer
+  auth/                    LoginForm, RegisterForm, Forgot/ResetPasswordForm
+  settings/                SettingsView (profile, avatar, password, delete)
   dashboard/               DashboardView, StatsStrip
   projects/                ProjectGrid, ProjectCard, ProjectDetailView
   tasks/                   TaskList, TaskCard
@@ -132,8 +164,10 @@ components/
 lib/
   types.ts                 Project / Task / User shapes
   mock-data.ts              Mock fetch functions (shaped like the future REST API)
+  mock-auth.ts              Mock auth/profile store, persisted to localStorage
+  auth-context.tsx          React context wrapping mock-auth for the whole app
   useAsync.ts               Shared loading/error/success hook
-  format.ts                 Date formatting
+  format.ts                 Date formatting, initials
 ```
 
 ## Known gaps / assumptions
@@ -141,8 +175,15 @@ lib/
 - **Filter scope**: search matches project name and task title; the
   status filter narrows tasks only (projects have no status field of
   their own). Priority and project filters are not implemented.
-- **No auth yet**: the profile dropdown's Settings/Sign out items are
-  presentational — Task 4 introduces real authentication.
+- **Mock authentication, not real auth**: `lib/mock-auth.ts` is a
+  plaintext, unsigned, client-only stand-in — it exists to demonstrate
+  the login/register/profile UX, not to be secure. There is no server to
+  keep anything secret from, so "sessions" are a plain readable cookie
+  plus `localStorage`, and forgot-password shows the reset link directly
+  on screen instead of emailing it (there's no email provider to wire
+  up in a frontend-only build). Task 4 has the real version: Argon2id
+  password hashing, signed JWT sessions, hashed single-use reset tokens,
+  and a real database.
 - **Mobile nav**: no hamburger menu. The current IA has one persistent
   nav link ("Dashboard") plus the profile menu, both of which already
   fit at 375px without collapsing.
@@ -155,9 +196,21 @@ lib/
 ## Testing
 
 ```bash
-npm run test
+npm run test                 # Vitest — 18 tests
+npx tsc --noEmit              # type-check
+
+# Browser/accessibility QA (needs `npm run dev` running)
+BASE_URL=http://localhost:3000 node scripts/qa-checks.mjs
+
+# Full live end-to-end check: register -> logout -> forgot/reset password
+# with the real mocked reset link -> login -> settings (profile, avatar,
+# change password) -> delete account, in a real browser
+BASE_URL=http://localhost:3000 node scripts/live-e2e-check.mjs
 ```
 
-18 tests across 7 files covering the mock-data progress calculation and
-the shared/task/project components' loading, empty, error, and success
-behavior. See `components/**/*.test.tsx` and `lib/mock-data.test.ts`.
+18 Vitest tests across 7 files cover the mock-data progress calculation
+and the shared/task/project components' loading, empty, error, and
+success behavior. `scripts/qa-checks.mjs` covers accessibility (axe),
+keyboard navigation, and responsive layout across every route, including
+the new auth/settings pages. `scripts/live-e2e-check.mjs` drives the
+full mock auth/profile journey in a real browser.
