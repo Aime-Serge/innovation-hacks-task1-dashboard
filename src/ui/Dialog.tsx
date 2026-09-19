@@ -1,0 +1,49 @@
+import type { ReactNode } from "react";
+import { Dialog as RadixDialog } from "radix-ui";
+import { t } from "@/i18n";
+import { Icon } from "./Icon";
+import { IconButton } from "./IconButton";
+
+type DialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  /** "drawer" slides in from the side (mobile filters, FR-14). */
+  variant?: "modal" | "drawer";
+  children: ReactNode;
+};
+
+/** Focus is trapped, Escape closes, focus returns to the trigger (Radix). */
+export function Dialog({ open, onOpenChange, title, description, variant = "modal", children }: DialogProps) {
+  const position =
+    variant === "drawer"
+      ? "inset-y-0 right-0 w-full max-w-sm"
+      : "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2";
+  return (
+    <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
+      <RadixDialog.Portal>
+        <RadixDialog.Overlay className="fixed inset-0 z-40 bg-overlay" />
+        <RadixDialog.Content
+          className={`fixed z-50 max-h-dvh overflow-y-auto border border-line bg-surface p-6 shadow-lg ${position} ${
+            variant === "drawer" ? "" : "rounded-lg"
+          }`}
+          {...(description === undefined ? { "aria-describedby": undefined } : {})}
+        >
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <RadixDialog.Title className="text-lg font-semibold">{title}</RadixDialog.Title>
+            <RadixDialog.Close asChild>
+              <IconButton label={t("common.close")}><Icon name="x" /></IconButton>
+            </RadixDialog.Close>
+          </div>
+          {description !== undefined && (
+            <RadixDialog.Description className="mb-4 text-sm text-muted">
+              {description}
+            </RadixDialog.Description>
+          )}
+          {children}
+        </RadixDialog.Content>
+      </RadixDialog.Portal>
+    </RadixDialog.Root>
+  );
+}

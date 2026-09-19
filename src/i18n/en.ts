@@ -1,0 +1,20 @@
+// Single dictionary for every user-facing string (NFR-21).
+export const en = {
+  "app.name": "DevDash",
+  "common.retry": "Retry",
+  "common.cancel": "Cancel",
+  "common.save": "Save",
+  "common.create": "Create",
+  "common.delete": "Delete",
+  "common.edit": "Edit",
+  "common.close": "Close",
+  "common.clearFilters": "Clear filters",
+  "common.loading": "Loading",
+  "common.search": "Search",
+  "common.dismiss": "Dismiss",
+  "state.error.title": "Something went wrong",
+  "state.error.body": "We could not load this. Check your connection and try again.",
+  "state.noResults.title": "No results",
+  "state.noResults.body": "Nothing matches your search or filters.",
+  "toast.region": "Notifications",
+} as const;
