@@ -19,7 +19,9 @@ function walk(dir: string): void {
       readFileSync(full, "utf8")
         .split("\n")
         .forEach((line, index) => {
-          for (const rule of RAW) if (rule.re.test(line)) offenders.push(`${full}:${index + 1} ${rule.name}: ${line.trim()}`);
+          for (const rule of RAW)
+            if (rule.re.test(line))
+              offenders.push(`${full}:${index + 1} ${rule.name}: ${line.trim()}`);
         });
     }
   }

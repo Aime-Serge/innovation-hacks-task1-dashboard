@@ -30,7 +30,6 @@
     "scripts/**/*.ts",
     "*.config.ts",
     "vitest.setup.ts",
-    "proxy.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],

@@ -3,7 +3,14 @@ import { readdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 const ALLOWLIST = new Set(["postcss.config.mjs"]);
-const SKIP = new Set(["node_modules", ".next", ".git", "coverage", "playwright-report", "test-results"]);
+const SKIP = new Set([
+  "node_modules",
+  ".next",
+  ".git",
+  "coverage",
+  "playwright-report",
+  "test-results",
+]);
 const JS = /\.(js|jsx|mjs|cjs)$/;
 
 function walk(dir: string, found: string[]): void {
