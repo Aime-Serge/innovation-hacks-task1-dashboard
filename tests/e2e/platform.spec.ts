@@ -40,7 +40,12 @@ test.describe("TC-016 security headers (NFR-16, TH-06)", () => {
       // The app's own error reporter logs the expected update-fails failure; only
       // browser-raised problems (CSP violations, React warnings) count here.
       const reported = m.text().startsWith("[");
-      if ((m.type() === "error" || m.type() === "warning") && !reported) problems.push(m.text());
+      // WebKit logs Next's background link prefetches (?_rsc=) as errors when the
+      // page navigates away mid-flight. That is a cancelled request, not a policy violation.
+      const cancelledPrefetch =
+        m.text().includes("_rsc=") && m.text().includes("access control checks");
+      if ((m.type() === "error" || m.type() === "warning") && !reported && !cancelledPrefetch)
+        problems.push(m.text());
     });
     page.on("pageerror", (e) => problems.push(e.message));
     for (const route of ["/", "/projects", "/projects/project-1", "/tasks", "/profile"]) {
