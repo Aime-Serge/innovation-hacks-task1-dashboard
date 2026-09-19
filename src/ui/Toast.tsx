@@ -53,7 +53,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             </RadixToast.Close>
           </RadixToast.Root>
         ))}
-        <RadixToast.Viewport className="fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2 sm:left-auto sm:w-80" />
+        {/* Mounted only while a toast exists: its wrapper carries an inline style that the strict CSP forbids in server HTML. */}
+        {items.length > 0 && (
+          <RadixToast.Viewport className="fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2 sm:left-auto sm:w-80" />
+        )}
       </RadixToast.Provider>
     </ToastContext.Provider>
   );

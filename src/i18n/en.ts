@@ -31,7 +31,6 @@ export const en = {
   "nav.projects": "Projects",
   "nav.tasks": "Tasks",
   "nav.profile": "Profile",
-  "nav.settings": "Settings",
   "theme.toggle": "Theme: {current}. Switch to {next}",
   "theme.light": "Light",
   "theme.dark": "Dark",

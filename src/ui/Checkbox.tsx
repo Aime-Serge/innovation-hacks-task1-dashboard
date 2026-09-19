@@ -1,6 +1,3 @@
-import { Checkbox as RadixCheckbox } from "radix-ui";
-import { Icon } from "./Icon";
-
 type CheckboxProps = {
   id: string;
   label: string;
@@ -8,19 +5,17 @@ type CheckboxProps = {
   onCheckedChange: (checked: boolean) => void;
 };
 
+/** Native input: keyboard, focus and screen-reader behaviour come for free. */
 export function Checkbox({ id, label, checked, onCheckedChange }: CheckboxProps) {
   return (
     <div className="touch-target flex items-center gap-2">
-      <RadixCheckbox.Root
+      <input
         id={id}
+        type="checkbox"
         checked={checked}
-        onCheckedChange={(value) => onCheckedChange(value === true)}
-        className="flex size-5 items-center justify-center rounded-sm border border-line-strong bg-surface data-[state=checked]:border-accent data-[state=checked]:bg-accent"
-      >
-        <RadixCheckbox.Indicator className="text-on-accent">
-          <Icon name="check" className="size-3" />
-        </RadixCheckbox.Indicator>
-      </RadixCheckbox.Root>
+        onChange={(event) => onCheckedChange(event.target.checked)}
+        className="size-5 accent-accent"
+      />
       <label htmlFor={id} className="text-sm text-fg">
         {label}
       </label>

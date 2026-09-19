@@ -6,7 +6,6 @@ export const NAV_ITEMS: readonly { href: string; label: MessageKey; icon: IconNa
   { href: "/projects", label: "nav.projects", icon: "folder" },
   { href: "/tasks", label: "nav.tasks", icon: "tasks" },
   { href: "/profile", label: "nav.profile", icon: "user" },
-  { href: "/settings", label: "nav.settings", icon: "pencil" },
 ];
 
 export const isActive = (pathname: string, href: string): boolean =>
