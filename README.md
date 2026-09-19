@@ -15,9 +15,11 @@ fetch functions, not a rewrite of any component.
 - **Demo video**: _add link here after recording_ — see `DEMO_SCRIPT.md`
   for the shot list (2–5 min, per the internship's Demo Video
   Requirements).
-- **Live deployment**: optional per the submission requirements, and
-  ready to deploy — see [Deployment](#deployment) below (Vercel, no
-  environment variables to set).
+- **Live deployment**: https://task-management-dashboard-two-beta.vercel.app
+  — log in with the demo account `aime.serge@example.com` / `password123`
+  (deployment steps in [Deployment](#deployment) below; verified with the
+  full browser journey and the accessibility/responsive suite against this
+  URL).
 
 ## Screenshots
 

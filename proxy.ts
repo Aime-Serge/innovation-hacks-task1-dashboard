@@ -31,5 +31,6 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico).*)"],
+  // robots.txt must stay public so crawlers get the file, not the login page.
+  matcher: ["/((?!_next|favicon.ico|robots.txt).*)"],
 };
