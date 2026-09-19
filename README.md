@@ -1,243 +1,153 @@
-# Developer Productivity Dashboard
+# DevDash: Developer Productivity Dashboard
 
-An at-a-glance status dashboard for developers checking their own project
-and task status — built with Next.js (App Router), TypeScript, and
-Tailwind CSS v4.
+An at-a-glance view of where every project and task stands. Task 1 of the
+Innovation Hacks Full Stack Development Internship: a strict-TypeScript Next.js
+frontend, built to the _Engineering Standards Pack (Task 1)_ and running on a
+typed mock service layer that Task 2's API replaces without touching a component.
 
-Built as Task 1 of the Innovation Hacks Full Stack Development
-Internship. This is the frontend only: it runs against a typed mock-data
-layer (`lib/mock-data.ts`) shaped to match the REST API Task 2 will
-provide, so wiring in the real backend later is a drop-in swap of the
-fetch functions, not a rewrite of any component.
+- **Live site:** https://task-management-dashboard-two-beta.vercel.app (deploys from `main`; this rebuild lives on `task/1-frontend` until it is merged)
+- **Demo video:** _add the link after recording, see [DEMO_SCRIPT.md](DEMO_SCRIPT.md)_
+- **Demo account:** `aime.serge@example.com` / `password123` (mock login, see [ADR-010](docs/adr/ADR-010-mock-auth.md); do not enter a real password)
 
-## Demo
+## Run it (3 commands)
 
-- **Demo video**: _add link here after recording_ — see `DEMO_SCRIPT.md`
-  for the shot list (2–5 min, per the internship's Demo Video
-  Requirements).
-- **Live deployment**: https://task-management-dashboard-two-beta.vercel.app
-  — log in with the demo account `aime.serge@example.com` / `password123`
-  (deployment steps in [Deployment](#deployment) below; verified with the
-  full browser journey and the accessibility/responsive suite against this
-  URL).
+Needs Node 22 or newer.
 
-## Screenshots
+```bash
+git clone https://github.com/Aime-Serge/innovation-hacks-task1-dashboard.git && cd innovation-hacks-task1-dashboard
+npm ci
+npm run dev        # http://localhost:3000
+```
 
-| Dashboard (desktop) | Dashboard (mobile) |
+For the production build that the tests use: `npm run build && npm start`.
+`.env.example` lists the only optional variable (`NEXT_PUBLIC_SCENARIO_SWITCHER`).
+
+## What to look at
+
+| Route | What it shows |
 | --- | --- |
-| ![Dashboard desktop](docs/screenshots/01-dashboard-desktop.png) | ![Dashboard mobile](docs/screenshots/02-dashboard-mobile.png) |
+| `/` | Four KPIs, deadlines for the next 7 days, recent activity |
+| `/projects` | Project cards with progress; search, filter, sort; create a project |
+| `/projects/[id]` | Progress ring, that project's tasks, edit, add a task, not-found state |
+| `/tasks` | Search (250 ms debounce), filters, sort, all in the URL; change a status from its card |
+| `/profile` | Your task statistics, edit your name, choose a theme |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Mock authentication. Registering sends you to login, it never signs you in |
 
-| Project detail | Task filter applied |
+### Every state is reachable
+
+Append `?scenario=<name>` to any URL, or use the **Scenario** select in the header.
+
+| Scenario | What happens |
 | --- | --- |
-| ![Project detail](docs/screenshots/03-project-detail.png) | ![Filtered tasks](docs/screenshots/04-filtered-tasks.png) |
+| `default` | Realistic mixed data |
+| `loading` | Every request takes 3 s; skeletons hold the layout |
+| `empty` | No projects, tasks or activity |
+| `error` | Every list request fails with a 500 |
+| `partial-error` | Only the tasks request fails; the rest of the page works |
+| `flaky` | The first request fails, Retry succeeds |
+| `update-fails` | A status change fails and rolls back with an error toast |
+| `large` | 500 tasks and 40 projects |
+| `edge-text` | 80-character names, long words, emoji, right-to-left text |
 
-| Loading state | Empty state (no matches) | Error state (with retry) |
+## Scripts
+
+| Command | What it checks |
+| --- | --- |
+| `npm run dev` / `build` / `start` | Development server, production build, production server |
+| `npm run typecheck` | `tsc --noEmit` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` |
+| `npm run lint` | ESLint (typescript-eslint strict, layer boundaries, no `any`, no literal JSX text), Prettier, no raw design values outside the token file |
+| `npm run check:no-js` | Fails on any JavaScript outside the allowlist (`postcss.config.mjs`) |
+| `npm test` | Vitest unit, component and contract tests with an 80% coverage threshold |
+| `npm run test:e2e` | Playwright journeys per scenario at 3 viewports, plus security headers, JS budget and interaction latency |
+| `npm run test:a11y` | axe on every route, in both themes and every scenario |
+| `npm run lighthouse` | Lighthouse (mobile) on `/`, `/projects`, `/tasks`, `/profile` |
+| `npm run audit` | `npm audit` for high and critical, plus a secret scan |
+| `npm run gate` | All of the above in the Pack's order, stopping at the first failure |
+
+## Architecture
+
+```
+app/ routes  →  features/  →  ui/ primitives and composites
+                   │
+                   ▼
+             services/ (interfaces)  ←  providers/  →  adapters/mock  (adapters/http in Task 2)
+```
+
+Dependencies point one way, and ESLint fails the build if that breaks: `ui/`
+imports no feature, service or adapter; features never import an adapter; only
+`src/providers` does.
+
+```
+src/
+  app/          routes, layouts, error, not-found, robots
+  features/     dashboard, projects, tasks, profile, auth, data (query hooks), shared
+  ui/           Button, Input, Badge, Dialog, DropdownMenu, Toast, ProgressBar/Ring, RegionState …
+  layout/       AppShell, Header, Sidebar, Grid, PageHeader, SkipLink
+  services/     ProjectService, TaskService, UserService, ActivityService, AuthService
+  adapters/mock fixtures, latency and failure injection, mock auth
+  providers/    services, auth, theme, scenario, query client
+  schemas/      Zod schemas; every type is z.infer of one
+  lib/          dates, list logic, error reporting, navigation
+  i18n/         en.ts, the only place user-facing strings live
+  styles/       tokens.css (colour, radius, shadow, motion), globals.css
+tests/          unit, contract, e2e, a11y
+docs/           audit, traceability, ADRs
+```
+
+Key decisions, each with an ADR in [docs/adr](docs/adr/README.md): the service
+seam, TanStack Query, URL state, Radix primitives, nonce CSP, keeping the mock
+login, the scenario switcher, and where this build deviates from the Pack.
+
+## How to add a screen
+
+1. **Schema.** Add or extend the Zod schema in `src/schemas/index.ts`; export the type with `z.infer`.
+2. **Service.** Add the method to the interface in `src/services/types.ts`, then implement it in `src/adapters/mock/services.ts` (parse the response with the schema). Add a contract test in `tests/contract`.
+3. **Hook.** Add a query hook in `src/features/data/hooks.ts`.
+4. **Feature.** Create `src/features/<name>/` with a `<Name>View.tsx` (under 200 lines). Wrap each dynamic region in `RegionState` so it gets loading, empty, no-results and error states for free.
+5. **Strings.** Add every user-facing string to `src/i18n/en.ts`; the linter rejects literal JSX text.
+6. **Route.** Add `src/app/(app)/<name>/page.tsx` that renders the view, and a link in `src/layout/nav.ts`.
+7. **Tests.** Name each test starting with a `TC-###`; add an e2e case per scenario that matters and an axe case in `tests/a11y`.
+8. Run `npm run gate`.
+
+## Quality gate
+
+Every figure below is from a command run on this machine (Node 22, Chromium and Firefox from Playwright, a loaded laptop). `npm run gate` is **not green**: three commands fail, and the reasons are below the table. The tag `task-1-submission` has therefore not been created.
+
+| Command | Result | Figures |
 | --- | --- | --- |
-| ![Loading state](docs/screenshots/05-loading-state.png) | ![Empty state](docs/screenshots/06-empty-state.png) | ![Error state](docs/screenshots/07-error-state.png) |
+| `npm run typecheck` | **Pass** | 0 errors |
+| `npm run lint` | **Pass** | ESLint 0 problems (`--max-warnings 0`), Prettier clean, no raw design values outside `tokens.css` |
+| `npm run check:no-js` | **Pass** | allowlist: `postcss.config.mjs` only |
+| `npm test` | **Pass** | 15 files, 235 tests. Coverage: 92.7% lines, 91.1% statements, 88.7% functions, 87.3% branches (threshold 80%) |
+| `npm run test:e2e` | **Fail** | Chromium and Firefox: 134 passed, 6 failed, 6 skipped. All 6 failures are the JavaScript budget (NFR-04, below); the skips are the same test, which only runs in Chromium. Interaction latency (`@perf`, 4x throttled CPU, run alone) worst 136 ms against a 200 ms budget: pass. The npm script stops at the first failing step, so run it with `npx playwright test tests/e2e --grep @perf --project=perf` |
+| `npm run test:a11y` | **Pass** | 94 of 94: axe (WCAG 2.2 AA tags) found 0 violations across every route, both themes and all nine scenarios, plus the dialog, drawer, menu, toast and 404 |
+| `npm run lighthouse` | **Fail** | Median of 3 runs, mobile profile. Performance 84 (`/`), 81 (`/projects`), 78 (`/tasks`), 86 (`/profile`), all under 90. Accessibility 100, best practices 100, SEO 100 everywhere. LCP 0.76 to 1.43 s (budget 2.5 s), CLS 0.002 to 0.005 (budget 0.1): both pass. Total Blocking Time 552 to 992 ms is what pulls performance down |
+| `npm run audit` | **Pass** | `npm audit`: 0 vulnerabilities; secret scan: 182 files, 0 findings |
+| `npm run build` | **Pass** | production build, 0 warnings |
 
-| Login | Register | Settings |
-| --- | --- | --- |
-| ![Login](docs/screenshots/08-login-desktop.png) | ![Register](docs/screenshots/09-register-desktop.png) | ![Settings](docs/screenshots/10-settings-desktop.png) |
+**Why three commands fail (NFR-04 and the performance score).** The Pack asks for 170 KB or less of first-load JavaScript per route. This build ships 186 to 188 KB gzipped, and a page with almost none of this app's code shipped 179 KB in the same measurement, so the budget sits below what Next.js 16 and React 19 send on their own. The Lighthouse performance score and the 300 to 1000 ms of blocking time follow from the same script weight. The measurements, what was already trimmed (293 KB down to 186 KB), and four ways to close the gap are in [ADR-017](docs/adr/ADR-017-first-load-javascript.md). Nothing was loosened to hide this: the test and the script still enforce the Pack's numbers.
 
-## Feature list
+**Not run.** WebKit (Safari) needs system libraries this machine lacks (`sudo playwright install-deps`); it runs in CI through `PW_WEBKIT=1`. Microsoft Edge was not run. `.github/workflows/ci.yml` has not yet run on GitHub. The manual keyboard and screen-reader checklists (Pack sections 11 B to F) were not done by a person.
 
-- **Mock authentication & profile** (`/login`, `/register`,
-  `/forgot-password`, `/reset-password`, `/settings`) — a full auth UX
-  with no real backend behind it: register/login/logout, forgot/reset
-  password (the reset link is shown directly on screen instead of being
-  emailed — see [Known gaps](#known-gaps--assumptions)), edit profile,
-  change password, avatar upload/remove, and account deletion, all
-  against an in-memory account store persisted to `localStorage`
-  (`lib/mock-auth.ts`). Every other route requires this mock session;
-  `proxy.ts` (Next 16's renamed `middleware.ts`) redirects unauthenticated
-  visits to `/login`.
-- **Dashboard home** (`/`) — the primary landing view: activity summary,
-  project grid, and a cross-project "My tasks" list.
-- **Project detail** (`/projects/:id`) — a project's own task list, so
-  clicking a project card goes somewhere real instead of a dead link.
-- **Navigation** — persistent nav bar with a skip-to-content link, a
-  non-color-only active-route indicator, a profile menu, and a footer
-  with copyright, tech-stack credit, and links to the repo and Innovation
-  Hacks.
-- **Profile section** — avatar/name in the nav, expandable dropdown,
-  keyboard-dismissible (Escape, click-outside), with a working Settings
-  link and Sign out action.
-- **Project & task cards** — one shared visual system (spacing, corner
-  radius, hairline border) driven by CSS custom-property design tokens,
-  not per-component styling.
-- **Progress indicators** — a segmented bar (git-diff-stat style) per
-  project, computed from that project's own tasks.
-- **Search & filter** — a live search over project names and task
-  titles, plus a status filter (Todo / In progress / Done / Blocked)
-  that narrows the task list.
-- **Loading / empty / error states** — every data-bound view (stats,
-  projects, tasks, profile) has all three, plus success: skeletons that
-  mirror the real content's shape, an empty state that distinguishes "no
-  data yet" from "your filters excluded everything," and an error state
-  with a Retry action.
-- **Responsive layout** — verified with headless Chromium at 375px,
-  768px, and 1280px: no horizontal scroll at any width, the project grid
-  reflows 1 → 2 → 3 columns, and task rows stack their metadata below
-  the title on narrow screens.
-- **Accessibility** — semantic landmarks (`<nav aria-label>`, `role="search"`,
-  `role="group"`), visible focus rings, `aria-pressed`/`aria-current`
-  where relevant, and status communicated via icon shape + text, never
-  color alone (StatusBadge pairs each of the four statuses with a
-  distinct icon: filled circle / half circle / hollow circle /
-  triangle).
+## Known limitations
 
-## Deployment
+- **NFR-04 and the Lighthouse performance score are not met.** See the gate table and ADR-017.
+- **Safari and Edge are unverified.** Only Chromium and Firefox ran locally.
+- **Authentication is a mock.** Accounts and plain-text passwords live in `localStorage`, and the session is an unsigned cookie the route guard only checks for presence (ADR-010). It exists to demonstrate guarded routes. Do not enter a real password.
+- **No Settings page.** Avatar upload, password change and account deletion from the baseline were removed to stay inside the Pack (ADR-013); the mock adapter still implements them.
+- **The CSP carries one relaxation** (`style-src` accepts a per-request nonce, because Radix's scroll lock injects a style tag), recorded in ADR-011.
+- **Mock data resets on reload.** Projects and tasks are in memory by design; nothing but the mock accounts and the theme choice touches browser storage.
+- **Lighthouse numbers are lab numbers** and vary with the machine; the script reports the median of three runs after a warm-up.
+- **The scenario switcher ships in production builds** so reviewers can reach every state (ADR-009).
+- **The task list renders 24 cards at a time** with a Show more button, to keep the 500-task scenario responsive.
 
-This app has no backend and no environment variables, so it deploys as-is
-to Vercel (or Netlify/Render):
+## Documents
 
-1. vercel.com → **Add New → Project** → import this repo.
-2. Leave every setting at its default — the root directory is the repo
-   root, and Vercel detects Next.js on its own. No env vars needed.
-3. **Deploy**, then open the URL and log in with the demo account
-   (`aime.serge@example.com` / `password123`).
+- [docs/audit.md](docs/audit.md): what the baseline had and what changed
+- [docs/traceability.md](docs/traceability.md): every FR and NFR with its tests
+- [docs/adr/](docs/adr/README.md): decisions and deviations
+- [DEMO_SCRIPT.md](DEMO_SCRIPT.md) and [docs/linkedin-post.md](docs/linkedin-post.md)
 
-Two things worth knowing:
+## Licence and fonts
 
-- Everything (the demo account, anything you register, projects, tasks)
-  lives in the visitor's own browser `localStorage`, so each visitor
-  starts from the same seeded state and their changes never reach anyone
-  else. That's the mock-data design, not a bug.
-- After login, register, and logout the app does a full page load rather
-  than a client-side navigation. Production builds prefetch links, and
-  while logged out the route guard answers the prefetch of `/` with a
-  redirect to `/login`; the router caches that and would replay it right
-  after login, bouncing the user back. Dev mode doesn't prefetch, so this
-  only shows up in a production build (`npm run build && npm run start`),
-  where the full journey in `scripts/live-e2e-check.mjs` passes.
-
-## Design direction
-
-Rather than a generic SaaS look (glossy cards, drop shadows, an
-arbitrary brand-blue badge system), this UI borrows the visual language
-developers already use all day: a graphite (not pure-black) canvas like
-a code editor, a monospace type role reserved for identifiers and
-numbers (task counts, dates, progress fractions) paired with a plain
-humanist sans for prose, and a muted diff-inspired status ramp (green /
-amber / slate-blue / muted red) instead of a generic color scale.
-Progress reads as a segmented bar — closer to `git diff --stat` — rather
-than a circular donut, which scales better in a dense list.
-
-## Technology stack
-
-- [Next.js 16](https://nextjs.org) (App Router, Turbopack)
-- [React 19](https://react.dev) + TypeScript
-- [Tailwind CSS v4](https://tailwindcss.com) (CSS-based `@theme` design tokens)
-- [Vitest](https://vitest.dev) + [Testing Library](https://testing-library.com) for component tests
-- [Playwright](https://playwright.dev) for local browser verification during development (not part of the test suite)
-
-## Getting started
-
-Requires Node.js 20+ (developed and verified against Node 22).
-
-```bash
-npm install
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-### Other scripts
-
-```bash
-npm run build   # production build
-npm run start   # run the production build
-npm run lint    # ESLint
-npm run test    # component test suite (Vitest)
-```
-
-### Environment variables
-
-None required. This build has no real backend or third-party services —
-`lib/mock-data.ts` simulates network latency and can simulate a failure
-via a dev-only "Simulate error" toggle on the dashboard (stripped from
-production builds via a `NODE_ENV` check), and `lib/mock-auth.ts` mocks
-the entire auth/profile system the same way. A `.env.example` will be
-added once Task 2's API introduces a base URL to configure.
-
-### Demo account
-
-A seeded account is always available on a fresh browser profile:
-`aime.serge@example.com` / `password123` (shown on the login page
-itself). Registering a new account works too (registering does not sign you in — you
-are sent to the login page to log in with it) — it's saved to
-`localStorage`, so it survives reloads within the same browser.
-
-## Project structure
-
-```
-app/                       Routes (App Router)
-  page.tsx                 Dashboard home (protected)
-  projects/[id]/page.tsx   Project detail (protected)
-  login/, register/        Auth entry points
-  forgot-password/,
-  reset-password/          Mocked password-reset flow
-  settings/                Profile, avatar, change password, delete account
-proxy.ts                   Route-protection gate (Next 16's renamed middleware.ts)
-components/
-  nav/                     NavBar, ProfileMenu (+ Avatar), Footer
-  auth/                    LoginForm, RegisterForm, Forgot/ResetPasswordForm
-  settings/                SettingsView (profile, avatar, password, delete)
-  dashboard/               DashboardView, StatsStrip
-  projects/                ProjectGrid, ProjectCard, ProjectDetailView
-  tasks/                   TaskList, TaskCard
-  controls/                SearchBar, FilterBar
-  shared/                  StatusBadge, ProgressBar, Skeleton, EmptyState, ErrorState
-lib/
-  types.ts                 Project / Task / User shapes
-  mock-data.ts              Mock fetch functions (shaped like the future REST API)
-  mock-auth.ts              Mock auth/profile store, persisted to localStorage
-  auth-context.tsx          React context wrapping mock-auth for the whole app
-  useAsync.ts               Shared loading/error/success hook
-  format.ts                 Date formatting, initials
-```
-
-## Known gaps / assumptions
-
-- **Filter scope**: search matches project name and task title; the
-  status filter narrows tasks only (projects have no status field of
-  their own). Priority and project filters are not implemented.
-- **Mock authentication, not real auth**: `lib/mock-auth.ts` is a
-  plaintext, unsigned, client-only stand-in — it exists to demonstrate
-  the login/register/profile UX, not to be secure. There is no server to
-  keep anything secret from, so "sessions" are a plain readable cookie
-  plus `localStorage`, and forgot-password shows the reset link directly
-  on screen instead of emailing it (there's no email provider to wire
-  up in a frontend-only build). Task 4 has the real version: Argon2id
-  password hashing, signed JWT sessions, hashed single-use reset tokens,
-  and a real database.
-- **Mobile nav**: no hamburger menu. The current IA has one persistent
-  nav link ("Dashboard") plus the profile menu, both of which already
-  fit at 375px without collapsing.
-- **Environment setup deviation**: the original task brief specified
-  `nvm install 20 && nvm use 20`. This machine already had Node 22
-  globally and no `nvm` on PATH, so the project runs on the ambient
-  Node 22 runtime instead, with all dependencies installed
-  project-locally (no global installs).
-
-## Testing
-
-```bash
-npm run test                 # Vitest — 18 tests
-npx tsc --noEmit              # type-check
-
-# Browser/accessibility QA (needs `npm run dev` running)
-BASE_URL=http://localhost:3000 node scripts/qa-checks.mjs
-
-# Full live end-to-end check: register -> logout -> forgot/reset password
-# with the real mocked reset link -> login -> settings (profile, avatar,
-# change password) -> delete account, in a real browser
-BASE_URL=http://localhost:3000 node scripts/live-e2e-check.mjs
-```
-
-18 Vitest tests across 7 files cover the mock-data progress calculation
-and the shared/task/project components' loading, empty, error, and
-success behavior. `scripts/qa-checks.mjs` covers accessibility (axe),
-keyboard navigation, and responsive layout across every route, including
-the new auth/settings pages. `scripts/live-e2e-check.mjs` drives the
-full mock auth/profile journey in a real browser.
+Inter (variable, Latin subset) is self-hosted under the SIL Open Font License; the licence is in `src/app/fonts/`.

@@ -1,31 +1,25 @@
-# Demo Video Script
+# Demo video script
 
-Target length: **3:30–4:00** (within the guide's 2–5 minute range).
-Record against `npm run dev` (needed for the loading/error-state beats —
-the "Simulate error" toggle is dev-only) at a desktop viewport, then a
-quick resize/DevTools pass for the responsive beat.
+Target length: **3:30 to 4:00** (the guide asks for 2 to 5 minutes). Record
+against the deployed site or `npm run build && npm start`. The scenario switcher
+works in both, so every state is reachable. Use a desktop window first, then
+resize (or DevTools device mode) for the responsive beat.
 
 | Time | Beat | Say | Show |
 | --- | --- | --- | --- |
-| 0:00–0:20 | Cold open — mock auth | "This is a Developer Productivity Dashboard — see where every project stands, at a glance. It's frontend-only for this task, so auth is mocked end-to-end: I'll log in with the seeded demo account." | Land on `/login`, log in with `aime.serge@example.com` / `password123`, arrive on the dashboard. |
-| 0:20–0:35 | Main features, part 1 — dashboard | "The activity strip up top gives open/blocked/in-progress counts. Each project card shows a segmented progress bar computed from its own tasks — no separate progress field, it's derived live." | Point at StatsStrip, hover/scroll across the three ProjectCards. |
-| 0:35–1:05 | Main features, part 2 — search & filter | "Search matches project names and task titles together. The status chips narrow the task list — watch: filtering to Blocked leaves the project grid untouched, since projects don't have a status of their own." | Type a search term, clear it, click the "Blocked" chip, point out the task list narrows while ProjectGrid doesn't. |
-| 1:05–1:35 | Main features, part 3 — navigation | "Clicking a project card goes to its own detail page — same TaskList and ProgressBar components, just scoped to one project's tasks." | Click "Atlas API Gateway", show the detail page, click "← Dashboard" to return. |
-| 1:35–2:05 | Profile & account | "The profile menu has a real Settings page: edit your name and email, upload an avatar, change your password, or delete the account — plus forgot/reset password from the login screen, which shows the reset link directly on screen since there's no email service in a frontend-only build." | Open the profile menu → Settings, show the pre-filled profile form and avatar upload; briefly show `/forgot-password` producing a reset link. |
-| 2:05–2:35 | Loading / empty / error states | "Every dynamic view has all four states. Empty isn't blank — it tells you whether there's no data or your filters excluded everything, with a Clear filters action. And there's a dev-only error toggle so I can show what a failed fetch looks like." | Reload to catch the skeleton loading state; search to zero results for the empty state; toggle "Simulate error (dev only)" and click Retry. |
-| 2:35–3:00 | Responsive pass | "It's been checked at 375, 768, and 1280 pixels with headless Chromium for zero horizontal scroll — the project grid goes from one column to three, task rows stack their metadata under the title on mobile." | Open DevTools device toolbar, step through mobile → tablet → desktop widths live. |
-| 3:00–3:30 | Technical detail | "Every status badge pairs an icon shape with text, never color alone — that's a real WCAG requirement, diff-style red/green is the most common colorblind confusion pair. The whole design system is CSS custom-property tokens in one file, and every fetch goes through one shared `useAsync` hook, so loading/error/success is the same contract everywhere instead of being reimplemented per component." | Quick cut to `app/globals.css` design tokens, then `lib/useAsync.ts`, then `StatusBadge.tsx`'s icon-shape map. |
-| 3:30–3:45 | Close | "Full source, README, and tests are in the GitHub repo linked below." | Back to the dashboard, or the GitHub repo page. |
+| 0:00 to 0:20 | Open | "This is DevDash, a developer productivity dashboard. Task 1 of my internship: strict TypeScript, Next.js, running on a mock service layer that Task 2's API will replace." | Land on `/login`. Log in with `aime.serge@example.com` / `password123` |
+| 0:20 to 0:50 | Dashboard | "Four KPIs, upcoming deadlines for the next 7 days, and recent activity. Every number is derived from the data: open tasks, overdue tasks, completion rate." | Point at each KPI, the deadline list, the activity feed |
+| 0:50 to 1:20 | Projects | "Each project card shows status, due date, progress and task counts. Long names truncate with a tooltip. Open a project to see its progress ring and its tasks." | `/projects`, then open one project; show the ring and the task cards |
+| 1:20 to 2:00 | Tasks: search, filter, sort | "Search is debounced and announces the result count. Filters combine: values inside one filter are OR, different filters are AND. All of it lives in the URL, so I can reload or share this exact view." | Type a search, tick two statuses and a priority, sort by title, reload the page, then Clear filters |
+| 2:00 to 2:20 | Optimistic update | "Changing a status updates instantly. If the service fails, it rolls back and shows an error toast." | Switch the scenario to `update-fails` and change a status |
+| 2:20 to 3:00 | Every state | "Every dynamic region has loading, empty, no-results and error states. Nine scenarios, one switch." | Cycle `loading`, `empty`, `error` (press Retry), `partial-error` (page still works), `large`, `edge-text` |
+| 3:00 to 3:25 | Responsive and themes | "360 pixels up to ultra-wide, no horizontal scroll. Sidebar becomes a drawer under 1024 pixels with a focus trap. Light, dark or system, with no flash." | Resize, open the drawer, press Escape; toggle the theme |
+| 3:25 to 3:50 | Engineering | "The gate runs typecheck, lint, unit and end-to-end tests, axe accessibility on every route in both themes, Lighthouse and a security audit. Types come from Zod schemas, layers are enforced by ESLint, and a nonce-based CSP protects the page." | Show `npm run gate` output or the README gate table |
+| 3:50 to 4:00 | Close | "Source, README and decision records are in the repo linked below." | The GitHub repo page |
 
 ## Notes for whoever records this
 
-- The dev-only error toggle and the loading-state skeleton only exist in
-  `npm run dev` — don't record this against `npm run start` / a
-  production deployment or those two beats won't be reachable.
-- The mock auth account list lives in `localStorage`, scoped to one
-  browser profile — use a profile that already has the seeded demo
-  account (or register fresh on camera), and don't clear site data
-  mid-recording.
-- `npm run test` (18 passing tests) is worth a 2–3 second cut if there's
-  time left in the 5-minute ceiling, but it's not required — the guide
-  asks for the app running, not the test suite.
+- Do not read out the demo password as anything real; it is a mock account.
+- The mock account list lives in `localStorage`, so use one browser profile and do not clear site data mid-recording.
+- Keep the scenario in the URL (`?scenario=`), it makes retakes repeatable.
+- Record the gate output from a real run. Do not claim a result you have not just seen.
