@@ -69,7 +69,11 @@ describe("TC-051 filter combination (BR-06)", () => {
   ];
 
   it("TC-051 combines different filters with AND", () => {
-    const result = filterTasks(tasks, { ...emptyTaskQuery(), status: ["todo"], priority: ["high"] });
+    const result = filterTasks(tasks, {
+      ...emptyTaskQuery(),
+      status: ["todo"],
+      priority: ["high"],
+    });
     expect(result).toHaveLength(1);
   });
 
@@ -121,9 +125,11 @@ describe("TC-052 sort", () => {
       makeProject({ name: "B", dueDate: "2030-01-01" }),
       makeProject({ name: "A", dueDate: "2030-02-01" }),
     ];
-    expect(applyProjectQuery(projects, { ...emptyProjectQuery(), sort: "name" })[0]?.name).toBe("A");
-    expect(
-      applyProjectQuery(projects, { ...emptyProjectQuery(), sort: "due_date" })[0]?.name,
-    ).toBe("B");
+    expect(applyProjectQuery(projects, { ...emptyProjectQuery(), sort: "name" })[0]?.name).toBe(
+      "A",
+    );
+    expect(applyProjectQuery(projects, { ...emptyProjectQuery(), sort: "due_date" })[0]?.name).toBe(
+      "B",
+    );
   });
 });

@@ -38,7 +38,10 @@ describe("TC-041 progress indicators expose ARIA (FR-13)", () => {
 
   it("TC-041 the ring is a progressbar and clamps out-of-range values", () => {
     const { rerender } = render(<ProgressRing value={150} label="Ring" />);
-    expect(screen.getByRole("progressbar", { name: "Ring" })).toHaveAttribute("aria-valuenow", "100");
+    expect(screen.getByRole("progressbar", { name: "Ring" })).toHaveAttribute(
+      "aria-valuenow",
+      "100",
+    );
     rerender(<ProgressRing value={-5} label="Ring" />);
     expect(screen.getByRole("progressbar", { name: "Ring" })).toHaveAttribute("aria-valuenow", "0");
   });
@@ -59,19 +62,29 @@ describe("TC-070 the five states of a dynamic region (NFR-05)", () => {
 
   it("TC-070 loading: marks the region aria-busy and shows the skeleton", () => {
     const { container } = render(
-      <RegionState {...base} status="loading" data={undefined}>{() => null}</RegionState>,
+      <RegionState {...base} status="loading" data={undefined}>
+        {() => null}
+      </RegionState>,
     );
     expect(container.querySelector("[aria-busy='true']")).not.toBeNull();
     expect(screen.getByText("skeleton")).toBeInTheDocument();
   });
 
   it("TC-074 success: renders the data", () => {
-    render(<RegionState {...base} status="success" data={["a", "b"]}>{(items) => <p>{items.join("+")}</p>}</RegionState>);
+    render(
+      <RegionState {...base} status="success" data={["a", "b"]}>
+        {(items) => <p>{items.join("+")}</p>}
+      </RegionState>,
+    );
     expect(screen.getByText("a+b")).toBeInTheDocument();
   });
 
   it("TC-071 empty: shows the message and the create-first action", () => {
-    render(<RegionState {...base} status="success" data={[]}>{() => null}</RegionState>);
+    render(
+      <RegionState {...base} status="success" data={[]}>
+        {() => null}
+      </RegionState>,
+    );
     expect(screen.getByRole("heading", { name: "Nothing yet" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create first" })).toBeInTheDocument();
   });
@@ -79,7 +92,9 @@ describe("TC-070 the five states of a dynamic region (NFR-05)", () => {
   it("TC-054 no-results: differs from empty and offers Clear filters", async () => {
     const onClear = vi.fn();
     render(
-      <RegionState {...base} status="success" data={[]} filtered onClearFilters={onClear}>{() => null}</RegionState>,
+      <RegionState {...base} status="success" data={[]} filtered onClearFilters={onClear}>
+        {() => null}
+      </RegionState>,
     );
     expect(screen.getByRole("heading", { name: "No results" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Create first" })).toBeNull();
@@ -89,7 +104,11 @@ describe("TC-070 the five states of a dynamic region (NFR-05)", () => {
 
   it("TC-072 error: announces a plain message, focuses Retry and retries", async () => {
     const onRetry = vi.fn();
-    render(<RegionState {...base} onRetry={onRetry} status="error" data={undefined}>{() => null}</RegionState>);
+    render(
+      <RegionState {...base} onRetry={onRetry} status="error" data={undefined}>
+        {() => null}
+      </RegionState>,
+    );
     expect(screen.getByRole("alert")).toHaveTextContent("Something went wrong");
     expect(screen.getByRole("alert").textContent).not.toMatch(/Error:|at .*\(|stack/i);
     const retry = screen.getByRole("button", { name: "Retry" });
@@ -121,7 +140,9 @@ describe("TC-050 search field debounce (FR-15)", () => {
   });
 
   it("TC-050 adopts an external change such as Clear filters", () => {
-    const { rerender } = render(<SearchField id="s" label="Search" value="old" onChange={() => undefined} />);
+    const { rerender } = render(
+      <SearchField id="s" label="Search" value="old" onChange={() => undefined} />,
+    );
     rerender(<SearchField id="s" label="Search" value="" onChange={() => undefined} />);
     expect(screen.getByRole("searchbox")).toHaveValue("");
   });
@@ -153,7 +174,11 @@ describe("TC-021 form fields link errors (FR-10)", () => {
     render(
       <>
         <FormField id="s" label="Choice" error="Pick one">
-          {(c) => <Select {...c}><option>a</option></Select>}
+          {(c) => (
+            <Select {...c}>
+              <option>a</option>
+            </Select>
+          )}
         </FormField>
         <FormField id="t" label="Notes" error="Too long">
           {(c) => <Textarea {...c} />}
@@ -191,7 +216,9 @@ describe("TC-011 dialog and menus (FR-06, FR-08)", () => {
     );
     for (let i = 0; i < 6; i += 1) {
       await userEvent.tab();
-      expect(within(screen.getByRole("dialog")).queryAllByRole("button")).toContain(document.activeElement);
+      expect(within(screen.getByRole("dialog")).queryAllByRole("button")).toContain(
+        document.activeElement,
+      );
     }
   });
 
@@ -200,7 +227,10 @@ describe("TC-011 dialog and menus (FR-06, FR-08)", () => {
     render(
       <DropdownMenu
         trigger={<button type="button">Open</button>}
-        items={[{ value: "a", label: "Alpha", selected: true }, { value: "b", label: "Beta" }]}
+        items={[
+          { value: "a", label: "Alpha", selected: true },
+          { value: "b", label: "Beta" },
+        ]}
         onSelect={onSelect}
       />,
     );
@@ -223,7 +253,18 @@ describe("TC-016 filters and sort (FR-16)", () => {
       <FilterBar
         active
         onClear={onClear}
-        groups={[{ id: "g", legend: "Status", options: [{ value: "a", label: "A" }, { value: "b", label: "B" }], selected: ["a"], onChange }]}
+        groups={[
+          {
+            id: "g",
+            legend: "Status",
+            options: [
+              { value: "a", label: "A" },
+              { value: "b", label: "B" },
+            ],
+            selected: ["a"],
+            onChange,
+          },
+        ]}
       />,
     );
     const group = screen.getByRole("group", { name: "Status" });
@@ -239,7 +280,16 @@ describe("TC-016 filters and sort (FR-16)", () => {
     const onSort = vi.fn();
     const onDir = vi.fn();
     render(
-      <SortMenu options={[{ value: "a", label: "Alpha" }, { value: "b", label: "Beta" }]} sort="a" dir="asc" onSort={onSort} onDir={onDir} />,
+      <SortMenu
+        options={[
+          { value: "a", label: "Alpha" },
+          { value: "b", label: "Beta" },
+        ]}
+        sort="a"
+        dir="asc"
+        onSort={onSort}
+        onDir={onDir}
+      />,
     );
     await userEvent.click(screen.getByRole("button", { name: /Sort: Alpha/ }));
     await userEvent.click(screen.getByRole("menuitem", { name: "Beta" }));
@@ -253,8 +303,12 @@ describe("TC-030 primitives", () => {
   it("TC-030 a badge always carries text, and icon buttons need a name", () => {
     render(
       <>
-        <Badge tone="danger" icon="alert">Overdue</Badge>
-        <IconButton label="Close"><Icon name="x" /></IconButton>
+        <Badge tone="danger" icon="alert">
+          Overdue
+        </Badge>
+        <IconButton label="Close">
+          <Icon name="x" />
+        </IconButton>
       </>,
     );
     expect(screen.getByText("Overdue")).toBeInTheDocument();
@@ -268,7 +322,12 @@ describe("TC-030 primitives", () => {
   });
 
   it("TC-030 skeletons and spinners are hidden from assistive tech", () => {
-    const { container } = render(<><Skeleton className="h-4" /><Spinner /></>);
+    const { container } = render(
+      <>
+        <Skeleton className="h-4" />
+        <Spinner />
+      </>,
+    );
     expect(container.querySelectorAll("[aria-hidden='true']")).toHaveLength(2);
   });
 
@@ -287,7 +346,9 @@ describe("TC-030 primitives", () => {
       <Card>
         <EmptyState title="Empty" body="Body" />
         <Checkbox id="c" label="Check me" checked={false} onCheckedChange={onCheck} />
-        <Tooltip content="Tip"><button type="button">Hover</button></Tooltip>
+        <Tooltip content="Tip">
+          <button type="button">Hover</button>
+        </Tooltip>
       </Card>,
     );
     await userEvent.click(screen.getByRole("checkbox", { name: "Check me" }));

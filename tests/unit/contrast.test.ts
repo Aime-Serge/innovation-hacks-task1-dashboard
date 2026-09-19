@@ -6,7 +6,12 @@ import { readFileSync } from "node:fs";
 const css = readFileSync("src/styles/tokens.css", "utf8");
 
 function tokens(block: string): Map<string, string> {
-  return new Map([...block.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})/g)].map((m) => [m[1] ?? "", m[2] ?? ""]));
+  return new Map(
+    [...block.matchAll(/--color-([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})/g)].map((m) => [
+      m[1] ?? "",
+      m[2] ?? "",
+    ]),
+  );
 }
 
 const light = tokens(css.slice(0, css.indexOf('[data-theme="dark"]')));
@@ -27,17 +32,37 @@ export function ratio(a: string, b: string): number {
 
 // [foreground, background]: text needs 4.5, UI components 3.
 const TEXT: [string, string][] = [
-  ["fg", "canvas"], ["fg", "surface"], ["fg", "subtle"], ["muted", "surface"], ["muted", "canvas"],
-  ["muted", "subtle"], ["accent-fg", "surface"], ["accent-fg", "accent-subtle"], ["on-accent", "accent"],
-  ["success", "success-bg"], ["warning", "warning-bg"], ["danger", "danger-bg"], ["info", "info-bg"],
-  ["surface", "danger"], ["canvas", "fg"],
+  ["fg", "canvas"],
+  ["fg", "surface"],
+  ["fg", "subtle"],
+  ["muted", "surface"],
+  ["muted", "canvas"],
+  ["muted", "subtle"],
+  ["accent-fg", "surface"],
+  ["accent-fg", "accent-subtle"],
+  ["on-accent", "accent"],
+  ["success", "success-bg"],
+  ["warning", "warning-bg"],
+  ["danger", "danger-bg"],
+  ["info", "info-bg"],
+  ["surface", "danger"],
+  ["canvas", "fg"],
 ];
 const UI: [string, string][] = [
-  ["line-strong", "surface"], ["line-strong", "canvas"], ["accent", "surface"], ["focus", "surface"],
-  ["focus", "canvas"], ["accent", "track"], ["success", "surface"], ["danger", "surface"],
+  ["line-strong", "surface"],
+  ["line-strong", "canvas"],
+  ["accent", "surface"],
+  ["focus", "surface"],
+  ["focus", "canvas"],
+  ["accent", "track"],
+  ["success", "surface"],
+  ["danger", "surface"],
 ];
 
-describe.each([["light", light], ["dark", dark]] as const)("TC-007 contrast in the %s theme (NFR-07)", (_name, theme) => {
+describe.each([
+  ["light", light],
+  ["dark", dark],
+] as const)("TC-007 contrast in the %s theme (NFR-07)", (_name, theme) => {
   const get = (token: string) => theme.get(token) ?? "#000000";
   it.each(TEXT)("TC-007 text %s on %s is at least 4.5:1", (fg, bg) => {
     expect(ratio(get(fg), get(bg))).toBeGreaterThanOrEqual(4.5);

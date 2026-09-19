@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createMockServices } from "@/adapters/mock";
-import { Activity, emptyProjectQuery, emptyTaskQuery, Project, Scenario, Task, User } from "@/schemas";
+import type { Scenario } from "@/schemas";
+import { Activity, emptyProjectQuery, emptyTaskQuery, Project, Task, User } from "@/schemas";
 import { ServiceError } from "@/services/types";
 
 const NOW = new Date("2030-01-10T12:00:00Z");
@@ -116,7 +117,9 @@ describe("TC-019 service mutations", () => {
   it("TC-019 a status change updates the task and records activity", async () => {
     const { services } = fast("default");
     const before = await services.activity.list(50);
-    const task = (await services.tasks.list(emptyTaskQuery())).items.find((t) => t.status !== "done");
+    const task = (await services.tasks.list(emptyTaskQuery())).items.find(
+      (t) => t.status !== "done",
+    );
     const updated = await services.tasks.updateStatus(task?.id ?? "", "done");
     expect(updated.status).toBe("done");
     expect((await services.activity.list(50)).length).toBe(Math.min(50, before.length + 1));
@@ -149,7 +152,9 @@ describe("TC-019 service mutations", () => {
 
   it("TC-030 rejects operations on unknown ids with not_found", async () => {
     const { services } = fast("default");
-    await expect(services.tasks.updateStatus("nope", "done")).rejects.toMatchObject({ status: 404 });
+    await expect(services.tasks.updateStatus("nope", "done")).rejects.toMatchObject({
+      status: 404,
+    });
     await expect(services.projects.update("nope", { name: "x" })).rejects.toMatchObject({
       status: 404,
     });

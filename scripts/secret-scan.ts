@@ -19,7 +19,8 @@ for (const file of files) {
     continue;
   }
   for (const name of findSecrets(text)) findings.push(`${file}: ${name}`);
-  for (const name of findSensitivePublicVars(text)) findings.push(`${file}: sensitive public variable ${name}`);
+  for (const name of findSensitivePublicVars(text))
+    findings.push(`${file}: sensitive public variable ${name}`);
 }
 
 if (findings.length > 0) {

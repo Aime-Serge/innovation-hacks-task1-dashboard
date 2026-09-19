@@ -11,7 +11,7 @@ function create(scenario: Scenario): Services {
   return createMockServices({ scenario, latency: { min: 0, max: 0 }, now: NOW }).services;
 }
 
-export function useScenarioServices(scenario: Scenario): Services {
+export function installScenario(scenario: Scenario): Services {
   current = create(scenario);
   return current;
 }

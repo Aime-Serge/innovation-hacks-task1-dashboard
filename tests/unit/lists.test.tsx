@@ -12,7 +12,7 @@ import { emptyTaskQuery, type Scenario } from "@/schemas";
 import { renderHook, act } from "@testing-library/react";
 import { makeProject, makeTask } from "./helpers";
 import { nav } from "./next-mock";
-import { useScenarioServices } from "./mock-services";
+import { installScenario } from "./mock-services";
 import { renderApp } from "./render";
 
 vi.mock("@/providers/ServicesProvider", () => import("./mock-services"));
@@ -25,7 +25,7 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 const open = (ui: React.ReactElement, scenario: Scenario = "default") => {
-  useScenarioServices(scenario);
+  installScenario(scenario);
   return renderApp(ui);
 };
 
@@ -33,7 +33,12 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
   it("TC-030 the task card shows title, status, priority, due date, assignee and project", () => {
     renderApp(
       <TaskCard
-        task={makeTask({ title: "Fix login", status: "in_review", priority: "high", dueDate: "2030-02-03" })}
+        task={makeTask({
+          title: "Fix login",
+          status: "in_review",
+          priority: "high",
+          dueDate: "2030-02-03",
+        })}
         projectName="Alpha"
         assigneeName="Ada Lovelace"
         onStatusChange={() => undefined}
@@ -44,12 +49,21 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
     expect(screen.getByText("Feb 3")).toBeInTheDocument();
     expect(screen.getByText("Ada Lovelace")).toBeInTheDocument();
     expect(screen.getByText("Alpha")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Change status of Fix login" })).toHaveValue("in_review");
+    expect(screen.getByRole("combobox", { name: "Change status of Fix login" })).toHaveValue(
+      "in_review",
+    );
   });
 
   it("TC-030 long titles truncate visually but stay readable through a title tooltip", () => {
     const long = "A".repeat(120);
-    renderApp(<TaskCard task={makeTask({ title: long })} projectName={undefined} assigneeName={undefined} onStatusChange={() => undefined} />);
+    renderApp(
+      <TaskCard
+        task={makeTask({ title: long })}
+        projectName={undefined}
+        assigneeName={undefined}
+        onStatusChange={() => undefined}
+      />,
+    );
     const heading = screen.getByRole("heading");
     expect(heading).toHaveClass("truncate");
     expect(heading).toHaveAttribute("title", long);
@@ -59,7 +73,12 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
 
   it("TC-031 an overdue task is marked with visible text, not colour alone", () => {
     renderApp(
-      <TaskCard task={makeTask({ dueDate: "2030-01-01", status: "todo" })} projectName="P" assigneeName="A" onStatusChange={() => undefined} />,
+      <TaskCard
+        task={makeTask({ dueDate: "2030-01-01", status: "todo" })}
+        projectName="P"
+        assigneeName="A"
+        onStatusChange={() => undefined}
+      />,
     );
     expect(screen.getByText("Overdue")).toBeInTheDocument();
   });
@@ -67,8 +86,18 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
   it("TC-031 a finished or future task is not marked overdue", () => {
     renderApp(
       <>
-        <TaskCard task={makeTask({ dueDate: "2030-01-01", status: "done" })} projectName="P" assigneeName="A" onStatusChange={() => undefined} />
-        <TaskCard task={makeTask({ dueDate: "2030-03-01", status: "todo" })} projectName="P" assigneeName="A" onStatusChange={() => undefined} />
+        <TaskCard
+          task={makeTask({ dueDate: "2030-01-01", status: "done" })}
+          projectName="P"
+          assigneeName="A"
+          onStatusChange={() => undefined}
+        />
+        <TaskCard
+          task={makeTask({ dueDate: "2030-03-01", status: "todo" })}
+          projectName="P"
+          assigneeName="A"
+          onStatusChange={() => undefined}
+        />
       </>,
     );
     expect(screen.queryByText("Overdue")).toBeNull();
@@ -76,19 +105,37 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
 
   it("TC-030 changing the status select reports the new status", async () => {
     const onStatusChange = vi.fn();
-    renderApp(<TaskCard task={makeTask({ title: "T" })} projectName="P" assigneeName="A" onStatusChange={onStatusChange} />);
+    renderApp(
+      <TaskCard
+        task={makeTask({ title: "T" })}
+        projectName="P"
+        assigneeName="A"
+        onStatusChange={onStatusChange}
+      />,
+    );
     await userEvent.selectOptions(screen.getByRole("combobox"), "done");
     expect(onStatusChange).toHaveBeenCalledWith("done");
   });
 
   it("TC-030 the project card shows name, status, due date, progress and counts", () => {
     renderApp(
-      <ProjectCard project={makeProject({ id: "p-9", name: "Alpha", status: "on_hold", dueDate: "2030-05-06" })} progress={{ total: 4, done: 1, percent: 25 }} />,
+      <ProjectCard
+        project={makeProject({
+          id: "p-9",
+          name: "Alpha",
+          status: "on_hold",
+          dueDate: "2030-05-06",
+        })}
+        progress={{ total: 4, done: 1, percent: 25 }}
+      />,
     );
     expect(screen.getByRole("link", { name: "Alpha" })).toHaveAttribute("href", "/projects/p-9");
     expect(screen.getByText("On hold")).toBeInTheDocument();
     expect(screen.getByText("Due May 6")).toBeInTheDocument();
-    expect(screen.getByRole("progressbar", { name: "Progress of Alpha" })).toHaveAttribute("aria-valuenow", "25");
+    expect(screen.getByRole("progressbar", { name: "Progress of Alpha" })).toHaveAttribute(
+      "aria-valuenow",
+      "25",
+    );
     expect(screen.getByText("1 of 4 tasks done")).toBeInTheDocument();
   });
 
@@ -100,11 +147,18 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
 
 describe("TC-053 URL state (FR-17, TH-02)", () => {
   it("TC-053 restores search, filters and sort from the URL", () => {
-    nav.search = new URLSearchParams("q=login&status=todo,done&priority=high&project=p-1&sort=title&dir=desc");
+    nav.search = new URLSearchParams(
+      "q=login&status=todo,done&priority=high&project=p-1&sort=title&dir=desc",
+    );
     const { result } = renderHook(() => useTaskQuery());
     expect(result.current.query).toEqual({
-      q: "login", status: ["todo", "done"], priority: ["high"], projectId: ["p-1"],
-      assigneeId: null, sort: "title", dir: "desc",
+      q: "login",
+      status: ["todo", "done"],
+      priority: ["high"],
+      projectId: ["p-1"],
+      assigneeId: null,
+      sort: "title",
+      dir: "desc",
     });
     expect(result.current.filtered).toBe(true);
   });
@@ -123,7 +177,9 @@ describe("TC-053 URL state (FR-17, TH-02)", () => {
     nav.search = new URLSearchParams("scenario=empty");
     const { result } = renderHook(() => useTaskQuery());
     act(() => result.current.update({ q: " hi ", status: ["done"] }));
-    expect(nav.replace).toHaveBeenCalledWith("/tasks?scenario=empty&q=hi&status=done", { scroll: false });
+    expect(nav.replace).toHaveBeenCalledWith("/tasks?scenario=empty&q=hi&status=done", {
+      scroll: false,
+    });
     act(() => result.current.clear());
     expect(nav.replace).toHaveBeenLastCalledWith("/tasks?scenario=empty", { scroll: false });
   });
@@ -132,11 +188,18 @@ describe("TC-053 URL state (FR-17, TH-02)", () => {
     nav.pathname = "/projects";
     nav.search = new URLSearchParams("q=x&status=active,nope&sort=due_date&dir=desc");
     const { result } = renderHook(() => useProjectQuery());
-    expect(result.current.query).toEqual({ q: "x", status: ["active"], sort: "due_date", dir: "desc" });
+    expect(result.current.query).toEqual({
+      q: "x",
+      status: ["active"],
+      sort: "due_date",
+      dir: "desc",
+    });
     act(() => result.current.update({ sort: "name", dir: "asc" }));
     expect(nav.replace).toHaveBeenCalledWith("/projects?q=x&status=active", { scroll: false });
     act(() => result.current.clear());
-    expect(nav.replace).toHaveBeenLastCalledWith("/projects?sort=due_date&dir=desc", { scroll: false });
+    expect(nav.replace).toHaveBeenLastCalledWith("/projects?sort=due_date&dir=desc", {
+      scroll: false,
+    });
     expect(emptyTaskQuery().q).toBe("");
   });
 });
@@ -155,7 +218,9 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
     nav.search = new URLSearchParams("q=zzzzzzzz");
     open(<TasksView />);
     expect(await screen.findByRole("heading", { name: "No results" })).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Clear filters" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByRole("button", { name: "Clear filters" }).length).toBeGreaterThanOrEqual(
+      1,
+    );
     expect(screen.queryByRole("button", { name: "Create a task" })).toBeNull();
   });
 
@@ -193,17 +258,19 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
     const before = (select as HTMLSelectElement).value;
     const next = before === "done" ? "todo" : "done";
     await userEvent.selectOptions(select, next);
-    expect(await screen.findByText("Could not update the task. The change was undone.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Could not update the task. The change was undone."),
+    ).toBeInTheDocument();
     await waitFor(() => {
       const card = screen.getAllByRole("article")[0] as HTMLElement;
-      expect((within(card).getByRole("combobox") as HTMLSelectElement).value).toBe(before);
+      expect(within(card).getByRole<HTMLSelectElement>("combobox").value).toBe(before);
     });
   });
 
   it("TC-019 a successful status change sticks", async () => {
     open(<TasksView />);
     const first = (await screen.findAllByRole("article"))[0] as HTMLElement;
-    const select = within(first).getByRole("combobox") as HTMLSelectElement;
+    const select = within(first).getByRole<HTMLSelectElement>("combobox");
     const next = select.value === "done" ? "todo" : "done";
     await userEvent.selectOptions(select, next);
     await waitFor(() => expect(screen.queryByText(/could not update/i)).toBeNull());
@@ -219,7 +286,7 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
     expect(screen.getByText("Choose the project this task belongs to.")).toBeInTheDocument();
     const dialog = screen.getByRole("dialog", { name: "New task" });
     await userEvent.type(within(dialog).getByLabelText("Title"), "Brand new task");
-    const project = within(dialog).getByLabelText("Project") as HTMLSelectElement;
+    const project = within(dialog).getByLabelText<HTMLSelectElement>("Project");
     await userEvent.selectOptions(project, project.options[1]?.value ?? "");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Task created.")).toBeInTheDocument();
@@ -275,7 +342,10 @@ describe("TC-054 projects pages (FR-11, FR-14)", () => {
   it("TC-014 an unknown project id shows a not-found state with a way back", async () => {
     open(<ProjectDetailView id="does-not-exist" />);
     expect(await screen.findByRole("heading", { name: "Project not found" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to projects" })).toHaveAttribute("href", "/projects");
+    expect(screen.getByRole("link", { name: "Back to projects" })).toHaveAttribute(
+      "href",
+      "/projects",
+    );
   });
 
   it("TC-072 the detail page shows an error with Retry when the request fails", async () => {

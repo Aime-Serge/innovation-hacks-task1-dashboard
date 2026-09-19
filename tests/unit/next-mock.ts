@@ -17,4 +17,9 @@ export const resetNav = (): void => {
 
 export const usePathname = (): string => nav.pathname;
 export const useSearchParams = (): URLSearchParams => nav.search;
-export const useRouter = () => ({ replace: nav.replace, push: nav.push, prefetch: vi.fn(), back: vi.fn() });
+export const useRouter = () => ({
+  replace: nav.replace,
+  push: nav.push,
+  prefetch: vi.fn(),
+  back: vi.fn(),
+});

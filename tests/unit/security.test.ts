@@ -43,7 +43,9 @@ describe("TC-092 secret scan (NFR-15, TH-04)", () => {
   it("TC-092 detects credentials", () => {
     expect(findSecrets(`const k = "${fakeGoogleKey}"`)).toContain("Google API key");
     expect(findSecrets(fakeKeyHeader)).toContain("private key block");
-    expect(findSecrets(`password = "${"a1".repeat(12)}"`)).toContain("hard-coded secret assignment");
+    expect(findSecrets(`password = "${"a1".repeat(12)}"`)).toContain(
+      "hard-coded secret assignment",
+    );
   });
 
   it("TC-092 ignores ordinary text", () => {
@@ -56,13 +58,17 @@ describe("TC-092 secret scan (NFR-15, TH-04)", () => {
   });
 
   it("TC-092 the repository passes the scan", () => {
-    expect(() => execFileSync("npx", ["jiti", "scripts/secret-scan.ts"], { stdio: "pipe" })).not.toThrow();
+    expect(() =>
+      execFileSync("npx", ["jiti", "scripts/secret-scan.ts"], { stdio: "pipe" }),
+    ).not.toThrow();
   }, 30_000);
 });
 
 describe("TC-082 no JavaScript sources (NFR-11)", () => {
   it("TC-082 check:no-js passes", () => {
-    expect(() => execFileSync("npx", ["jiti", "scripts/check-no-js.ts"], { stdio: "pipe" })).not.toThrow();
+    expect(() =>
+      execFileSync("npx", ["jiti", "scripts/check-no-js.ts"], { stdio: "pipe" }),
+    ).not.toThrow();
   }, 30_000);
 });
 
@@ -76,7 +82,9 @@ describe("TC-080 architecture (NFR-12, TH-01)", () => {
   it("TC-080 no source file uses dangerouslySetInnerHTML, any, or ts-ignore", () => {
     for (const file of sources("src")) {
       const text = readFileSync(file, "utf8");
-      expect(text, file).not.toMatch(/dangerouslySetInnerHTML|@ts-ignore|@ts-nocheck|:\s*any\b|as any\b/);
+      expect(text, file).not.toMatch(
+        /dangerouslySetInnerHTML|@ts-ignore|@ts-nocheck|:\s*any\b|as any\b/,
+      );
     }
   });
 

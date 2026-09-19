@@ -18,7 +18,7 @@ export function findSecrets(text: string): string[] {
 
 /** Only NEXT_PUBLIC_ variables may reach the browser, and only non-sensitive ones. */
 export function findSensitivePublicVars(text: string): string[] {
-  return [...text.matchAll(/^\s*(NEXT_PUBLIC_[A-Z0-9_]*(?:SECRET|KEY|TOKEN|PASSWORD)[A-Z0-9_]*)\s*=/gim)].map(
-    (match) => match[1] ?? "",
-  );
+  return [
+    ...text.matchAll(/^\s*(NEXT_PUBLIC_[A-Z0-9_]*(?:SECRET|KEY|TOKEN|PASSWORD)[A-Z0-9_]*)\s*=/gim),
+  ].map((match) => match[1] ?? "");
 }
