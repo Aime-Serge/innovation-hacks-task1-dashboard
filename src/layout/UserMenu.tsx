@@ -18,7 +18,7 @@ export function UserMenu() {
           aria-label={t("layout.userMenu", { name: user.name })}
           className="touch-target flex items-center gap-2 rounded-md p-1 hover:bg-subtle"
         >
-          <Avatar name={user.name} src={user.avatarUrl} size="sm" />
+          <Avatar name={user.name} size="sm" />
           <span className="hidden max-w-40 truncate text-sm sm:inline">{user.name}</span>
         </button>
       }

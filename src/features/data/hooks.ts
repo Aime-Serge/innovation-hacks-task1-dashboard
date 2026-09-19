@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServices } from "@/providers/ServicesProvider";
 import { reportError } from "@/lib/report-error";
 import {
@@ -34,6 +34,8 @@ export function useTasks(query: TaskQuery) {
   return useQuery({
     queryKey: keys.tasks(query),
     queryFn: ({ signal }) => reported("tasks.list", () => tasks.list(query, signal)),
+    // Keep the list on screen while a new filter loads instead of flashing skeletons.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -47,6 +49,7 @@ export function useProjects(query: ProjectQuery) {
   return useQuery({
     queryKey: keys.projects(query),
     queryFn: ({ signal }) => reported("projects.list", () => projects.list(query, signal)),
+    placeholderData: keepPreviousData,
   });
 }
 

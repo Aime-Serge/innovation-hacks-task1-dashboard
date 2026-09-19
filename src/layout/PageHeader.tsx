@@ -7,7 +7,7 @@ export function PageHeader({ title, description, actions }: PageHeaderProps) {
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         <h1 className="break-words text-2xl font-semibold">{title}</h1>
-        {description !== undefined && <p className="mt-1 text-sm text-muted">{description}</p>}
+        {description !== undefined && <p className="mt-1 text-base text-muted">{description}</p>}
       </div>
       {actions}
     </div>

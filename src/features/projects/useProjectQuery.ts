@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { replaceUrl } from "@/lib/navigation";
 import {
   emptyProjectQuery,
   ProjectSort,
@@ -13,7 +14,6 @@ import {
 /** FR-17 for the projects list: same URL contract as tasks. */
 export function useProjectQuery() {
   const params = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const serialized = params.toString();
 
@@ -42,9 +42,9 @@ export function useProjectQuery() {
       put("sort", next.sort === "name" ? null : next.sort);
       put("dir", next.dir === "asc" ? null : next.dir);
       const qs = p.toString();
-      router.replace(qs === "" ? pathname : `${pathname}?${qs}`, { scroll: false });
+      replaceUrl(qs === "" ? pathname : `${pathname}?${qs}`);
     },
-    [query, serialized, router, pathname],
+    [query, serialized, pathname],
   );
 
   const clear = useCallback(() => update({ q: "", status: [] }), [update]);

@@ -1,5 +1,6 @@
 "use client";
 
+import { array } from "zod/mini";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { Grid } from "@/layout/Grid";
@@ -72,7 +73,7 @@ export function ProjectsView() {
                 label: t(`projectStatus.${v}`),
               })),
               selected: query.status,
-              onChange: (status) => update({ status: ProjectStatus.array().parse(status) }),
+              onChange: (status) => update({ status: array(ProjectStatus).parse(status) }),
             },
           ]}
         />
@@ -102,6 +103,7 @@ export function ProjectsView() {
         }}
         onRetry={() => void projects.refetch()}
         onClearFilters={clear}
+        headingLevel="h2"
       >
         {(items) => (
           <Grid layout="cards">

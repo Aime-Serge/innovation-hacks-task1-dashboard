@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { array } from "zod/mini";
+import { useCallback, useState } from "react";
 import { PageHeader } from "@/layout/PageHeader";
 import { t, tCount } from "@/i18n";
 import { Priority, TaskStatus, type TaskSort } from "@/schemas";
@@ -27,6 +28,11 @@ export function TasksView() {
   const projects = useProjects(emptyProjectQuery());
   const users = useUsers();
   const changeStatus = useUpdateTaskStatus(() => toast.notify("error", t("task.statusFailed")));
+  const { mutate } = changeStatus;
+  const changeStatusOf = useCallback(
+    (id: string, status: TaskStatus) => mutate({ id, status }),
+    [mutate],
+  );
   const projectItems = projects.data?.items ?? [];
 
   return (
@@ -68,14 +74,14 @@ export function TasksView() {
               legend: t("filter.status"),
               options: TaskStatus.options.map((v) => ({ value: v, label: t(`taskStatus.${v}`) })),
               selected: query.status,
-              onChange: (status) => update({ status: TaskStatus.array().parse(status) }),
+              onChange: (status) => update({ status: array(TaskStatus).parse(status) }),
             },
             {
               id: "priority",
               legend: t("filter.priority"),
               options: Priority.options.map((v) => ({ value: v, label: t(`priority.${v}`) })),
               selected: query.priority,
-              onChange: (priority) => update({ priority: Priority.array().parse(priority) }),
+              onChange: (priority) => update({ priority: array(Priority).parse(priority) }),
             },
             {
               id: "project",
@@ -83,6 +89,8 @@ export function TasksView() {
               options: projectItems.map((p) => ({ value: p.id, label: p.name })),
               selected: query.projectId,
               onChange: (projectId) => update({ projectId }),
+              pending: projects.isPending,
+              scroll: true,
             },
           ]}
         />
@@ -99,7 +107,7 @@ export function TasksView() {
         onRetry={() => void tasks.refetch()}
         onClear={clear}
         onCreate={() => setCreating(true)}
-        onStatusChange={(id, status) => changeStatus.mutate({ id, status })}
+        onStatusChange={changeStatusOf}
       />
       <TaskFormDialog
         open={creating}

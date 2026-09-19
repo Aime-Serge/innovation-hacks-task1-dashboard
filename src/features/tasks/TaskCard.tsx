@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { formatDate, isOverdue, todayIso } from "@/lib/dates";
 import { t } from "@/i18n";
 import { TaskStatus, type Task } from "@/schemas";
@@ -12,18 +13,31 @@ type TaskCardProps = {
   task: Task;
   projectName: string | undefined;
   assigneeName: string | undefined;
-  onStatusChange: (status: TaskStatus) => void;
+  onStatusChange: (id: string, status: TaskStatus) => void;
+  /** Headings never skip a level: h2 under the page's h1, h3 under a section's h2. */
+  headingLevel?: "h2" | "h3";
 };
 
 /** FR-12: every field, overdue marked visibly and announced to screen readers. */
-export function TaskCard({ task, projectName, assigneeName, onStatusChange }: TaskCardProps) {
+/**
+ * Memoised: a filter change re-renders the page but leaves unchanged cards alone,
+ * which keeps interactions inside the INP budget (NFR-03). Callers must pass a
+ * stable onStatusChange.
+ */
+export const TaskCard = memo(function TaskCard({
+  task,
+  projectName,
+  assigneeName,
+  onStatusChange,
+  headingLevel: Heading = "h2",
+}: TaskCardProps) {
   const overdue = isOverdue(task, todayIso());
   return (
     <Card as="article" className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="min-w-0 truncate font-semibold" title={task.title}>
+        <Heading className="min-w-0 truncate font-semibold" title={task.title}>
           {task.title}
-        </h3>
+        </Heading>
         <PriorityBadge priority={task.priority} />
       </div>
       {projectName !== undefined && (
@@ -64,7 +78,7 @@ export function TaskCard({ task, projectName, assigneeName, onStatusChange }: Ta
         <Select
           id={`status-${task.id}`}
           value={task.status}
-          onChange={(event) => onStatusChange(TaskStatus.parse(event.target.value))}
+          onChange={(event) => onStatusChange(task.id, TaskStatus.parse(event.target.value))}
         >
           {TaskStatus.options.map((status) => (
             <option key={status} value={status}>
@@ -75,4 +89,4 @@ export function TaskCard({ task, projectName, assigneeName, onStatusChange }: Ta
       </div>
     </Card>
   );
-}
+});

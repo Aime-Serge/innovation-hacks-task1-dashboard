@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { PageHeader } from "@/layout/PageHeader";
 import { t, tCount } from "@/i18n";
 import { formatDate } from "@/lib/dates";
 import { projectProgress } from "@/lib/query-logic";
-import { emptyProjectQuery, emptyTaskQuery } from "@/schemas";
+import { emptyProjectQuery, emptyTaskQuery, type TaskStatus } from "@/schemas";
 import { Button } from "@/ui/Button";
 import { Card } from "@/ui/Card";
 import { EmptyState } from "@/ui/EmptyState";
@@ -30,6 +30,11 @@ export function ProjectDetailView({ id }: { id: string }) {
   const { user } = useAuth();
   const toast = useToast();
   const changeStatus = useUpdateTaskStatus(() => toast.notify("error", t("task.statusFailed")));
+  const { mutate } = changeStatus;
+  const changeStatusOf = useCallback(
+    (id: string, status: TaskStatus) => mutate({ id, status }),
+    [mutate],
+  );
   const [editing, setEditing] = useState(false);
   const [adding, setAdding] = useState(false);
   const progress = useMemo(() => projectProgress(id, tasks.data?.items ?? []), [id, tasks.data]);
@@ -41,11 +46,13 @@ export function ProjectDetailView({ id }: { id: string }) {
       </div>
     );
   }
-  if (project.isError) return <ErrorState onRetry={() => void project.refetch()} />;
+  if (project.isError)
+    return <ErrorState onRetry={() => void project.refetch()} headingLevel="h1" />;
   if (project.data === null) {
     return (
       <EmptyState
         icon="folder"
+        headingLevel="h1"
         title={t("project.notFound.title")}
         body={t("project.notFound.body")}
         action={
@@ -95,7 +102,8 @@ export function ProjectDetailView({ id }: { id: string }) {
         onRetry={() => void tasks.refetch()}
         onClear={() => undefined}
         onCreate={() => setAdding(true)}
-        onStatusChange={(taskId, status) => changeStatus.mutate({ id: taskId, status })}
+        onStatusChange={changeStatusOf}
+        headingLevel="h3"
       />
       <ProjectFormDialog
         open={editing}

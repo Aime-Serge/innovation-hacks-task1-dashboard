@@ -13,7 +13,12 @@ type Props = {
 /** FR-04: newest first, with relative times. */
 export function ActivityFeed({ items, users, projects }: Props) {
   return (
-    <Card as="ul" className="divide-y divide-line p-0">
+    <Card
+      as="ul"
+      tabIndex={0}
+      aria-labelledby="activity-heading"
+      className="max-h-96 divide-y divide-line overflow-y-auto p-0"
+    >
       {items.map((item) => {
         const actor = users.get(item.actorId)?.name ?? t("activity.someone");
         const project = projects.get(item.projectId)?.name ?? t("task.unknownProject");

@@ -13,7 +13,7 @@ export function ProjectCard({ project, progress }: { project: Project; progress:
   return (
     <Card as="article" className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="min-w-0 font-semibold">
+        <h2 className="min-w-0 font-semibold">
           <Link
             href={`/projects/${project.id}`}
             className="block truncate hover:underline"
@@ -21,7 +21,7 @@ export function ProjectCard({ project, progress }: { project: Project; progress:
           >
             {project.name}
           </Link>
-        </h3>
+        </h2>
         <ProjectStatusBadge status={project.status} />
       </div>
       <p className="flex items-center gap-1 text-sm text-muted">

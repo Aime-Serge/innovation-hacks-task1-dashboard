@@ -10,7 +10,12 @@ type Props = { tasks: readonly Task[]; projects: ReadonlyMap<string, Project> };
 
 export function DeadlineList({ tasks, projects }: Props) {
   return (
-    <Card as="ul" className="divide-y divide-line p-0">
+    <Card
+      as="ul"
+      tabIndex={0}
+      aria-labelledby="deadlines-heading"
+      className="max-h-96 divide-y divide-line overflow-y-auto p-0"
+    >
       {tasks.map((task) => (
         <li key={task.id} className="flex items-center gap-3 p-3">
           <div className="min-w-0 flex-1">

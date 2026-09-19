@@ -141,6 +141,7 @@ export const en = {
   "task.form.assignee": "Assignee",
 
   "profile.title": "Profile",
+  "profile.description": "Your account, your task statistics and your preferences.",
   "profile.stats": "Your tasks",
   "profile.stats.empty": "No task statistics yet",
   "profile.edit": "Edit profile",

@@ -1,6 +1,7 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { replaceUrl } from "@/lib/navigation";
 import { storeScenario, useScenario } from "@/providers/scenario";
 import { t } from "@/i18n";
 import { Scenario } from "@/schemas";
@@ -12,7 +13,6 @@ import { Select } from "@/ui/Input";
  */
 export function ScenarioSwitcher() {
   const current = useScenario();
-  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
 
@@ -23,7 +23,7 @@ export function ScenarioSwitcher() {
     storeScenario(scenario);
     const next = new URLSearchParams(params.toString());
     next.set("scenario", scenario);
-    router.replace(`${pathname}?${next.toString()}`);
+    replaceUrl(`${pathname}?${next.toString()}`);
   };
 
   return (

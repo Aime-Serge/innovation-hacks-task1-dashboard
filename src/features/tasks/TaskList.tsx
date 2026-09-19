@@ -10,7 +10,7 @@ import { RegionState, type RegionStatus } from "@/ui/RegionState";
 import { byId } from "../shared/lookups";
 import { TaskCard } from "./TaskCard";
 
-const PAGE = 48;
+const PAGE = 24;
 
 export function TaskListSkeleton() {
   return (
@@ -32,6 +32,7 @@ type Props = {
   onClear: () => void;
   onCreate: () => void;
   onStatusChange: (id: string, status: TaskStatus) => void;
+  headingLevel?: "h2" | "h3";
 };
 
 /** FR-12 / FR-18 / NFR-03: capped rendering keeps 500-task scenarios responsive. */
@@ -56,6 +57,7 @@ export function TaskList(props: Props) {
       }}
       onRetry={props.onRetry}
       onClearFilters={props.onClear}
+      headingLevel={props.headingLevel ?? "h2"}
     >
       {(items) => (
         <>
@@ -68,7 +70,8 @@ export function TaskList(props: Props) {
                 assigneeName={
                   task.assigneeId === null ? undefined : users.get(task.assigneeId)?.name
                 }
-                onStatusChange={(status) => props.onStatusChange(task.id, status)}
+                onStatusChange={props.onStatusChange}
+                {...(props.headingLevel === undefined ? {} : { headingLevel: props.headingLevel })}
               />
             ))}
           </Grid>

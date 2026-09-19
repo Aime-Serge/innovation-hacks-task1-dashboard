@@ -99,7 +99,7 @@ export function DashboardView() {
             status={statusOf(tasks)}
             data={tasks.data === undefined ? undefined : deadlines}
             filtered={false}
-            skeleton={<Skeleton className="h-48" />}
+            skeleton={<Skeleton className="h-96" />}
             empty={{
               icon: "calendar",
               title: t("deadlines.empty.title"),
@@ -118,7 +118,7 @@ export function DashboardView() {
             status={statusOf(activity)}
             data={activity.data}
             filtered={false}
-            skeleton={<Skeleton className="h-48" />}
+            skeleton={<Skeleton className="h-96" />}
             empty={{
               icon: "clock",
               title: t("activity.empty.title"),

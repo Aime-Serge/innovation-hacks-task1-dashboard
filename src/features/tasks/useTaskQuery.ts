@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { replaceUrl } from "@/lib/navigation";
 import { emptyTaskQuery, Priority, SortDir, TaskSort, TaskStatus, type TaskQuery } from "@/schemas";
 
 const list = <T extends string>(raw: string | null, allowed: readonly T[]): T[] =>
@@ -12,7 +13,6 @@ const list = <T extends string>(raw: string | null, allowed: readonly T[]): T[] 
 /** FR-17: the whole view lives in the query string; other params (scenario) survive. */
 export function useTaskQuery() {
   const params = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const serialized = params.toString();
 
@@ -44,9 +44,9 @@ export function useTaskQuery() {
       put("sort", next.sort === "due_date" ? null : next.sort);
       put("dir", next.dir === "asc" ? null : next.dir);
       const qs = p.toString();
-      router.replace(qs === "" ? pathname : `${pathname}?${qs}`, { scroll: false });
+      replaceUrl(qs === "" ? pathname : `${pathname}?${qs}`);
     },
-    [query, serialized, router, pathname],
+    [query, serialized, pathname],
   );
 
   const clear = useCallback(

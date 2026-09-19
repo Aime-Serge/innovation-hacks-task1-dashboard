@@ -29,9 +29,9 @@ export function ProfileView() {
 
   return (
     <>
-      <PageHeader title={t("profile.title")} />
+      <PageHeader title={t("profile.title")} description={t("profile.description")} />
       <Card className="mb-6 flex flex-wrap items-center gap-4">
-        <Avatar name={user.name} src={user.avatarUrl} size="lg" />
+        <Avatar name={user.name} size="lg" />
         <div className="min-w-0">
           <p className="break-words text-lg font-semibold">{user.name}</p>
           <p className="break-all text-sm text-muted">{user.email}</p>
