@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ForgotPasswordForm } from "@/features/auth/ForgotPasswordForm";
@@ -69,6 +69,18 @@ describe("TC-010 navigation (FR-05..08)", () => {
     expect(skip).toHaveFocus();
     expect(skip).toHaveAttribute("href", "#main-content");
     expect(screen.getByRole("main")).toHaveAttribute("id", "main-content");
+  });
+
+  it("TC-012 the shell ends with a labelled footer landmark and safe external links", () => {
+    renderApp(
+      <AppShell>
+        <p>Body</p>
+      </AppShell>,
+    );
+    const footer = screen.getByRole("contentinfo", { name: "Site footer" });
+    const repo = within(footer).getByRole("link", { name: "Source on GitHub" });
+    expect(repo).toHaveAttribute("rel", "noopener noreferrer");
+    expect(within(footer).getByText(/mock data and a mock login/)).toBeInTheDocument();
   });
 
   it("TC-012 the shell has header, nav and one main landmark", () => {

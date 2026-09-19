@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import { Footer } from "./Footer";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { SkipLink } from "./SkipLink";
 
-/** Authenticated frame: skip link, sidebar, header, one <main> landmark. */
+/** Authenticated frame: skip link, sidebar, header, one <main> landmark, footer. */
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh">
@@ -18,6 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           {children}
         </main>
+        <Footer />
       </div>
     </div>
   );

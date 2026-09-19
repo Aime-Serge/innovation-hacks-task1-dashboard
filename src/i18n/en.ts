@@ -22,6 +22,11 @@ export const en = {
   "form.saveFailed": "We could not save your changes. Please try again.",
 
   "layout.skip": "Skip to main content",
+  "footer.label": "Site footer",
+  "footer.project": "DevDash, Task 1 of the Innovation Hacks Full Stack Development Internship",
+  "footer.demo": "Demo build: mock data and a mock login. Nothing you enter leaves your browser.",
+  "footer.repo": "Source on GitHub",
+  "footer.docs": "Documentation",
   "layout.primaryNav": "Primary",
   "layout.menu": "Menu",
   "layout.openMenu": "Open menu",
