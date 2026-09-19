@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { hardNavigate } from "./navigation";
 import type { User } from "./types";
 import {
   getSession,
@@ -72,8 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await mockLogout();
     setUser(null);
     setStatus("unauthenticated");
-    router.push("/login");
-  }, [router]);
+    hardNavigate("/login");
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, status, login, register, logout, setUser }}>

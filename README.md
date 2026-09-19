@@ -15,10 +15,9 @@ fetch functions, not a rewrite of any component.
 - **Demo video**: _add link here after recording_ — see `DEMO_SCRIPT.md`
   for the shot list (2–5 min, per the internship's Demo Video
   Requirements).
-- **Live deployment**: not deployed for this task — optional per the
-  submission requirements. `npm run build && npm run start` runs the
-  production build locally; any of Vercel/Netlify/Render would work
-  as-is with zero configuration (no environment variables to set).
+- **Live deployment**: optional per the submission requirements, and
+  ready to deploy — see [Deployment](#deployment) below (Vercel, no
+  environment variables to set).
 
 ## Screenshots
 
@@ -84,6 +83,31 @@ fetch functions, not a rewrite of any component.
   color alone (StatusBadge pairs each of the four statuses with a
   distinct icon: filled circle / half circle / hollow circle /
   triangle).
+
+## Deployment
+
+This app has no backend and no environment variables, so it deploys as-is
+to Vercel (or Netlify/Render):
+
+1. vercel.com → **Add New → Project** → import this repo.
+2. Leave every setting at its default — the root directory is the repo
+   root, and Vercel detects Next.js on its own. No env vars needed.
+3. **Deploy**, then open the URL and log in with the demo account
+   (`aime.serge@example.com` / `password123`).
+
+Two things worth knowing:
+
+- Everything (the demo account, anything you register, projects, tasks)
+  lives in the visitor's own browser `localStorage`, so each visitor
+  starts from the same seeded state and their changes never reach anyone
+  else. That's the mock-data design, not a bug.
+- After login, register, and logout the app does a full page load rather
+  than a client-side navigation. Production builds prefetch links, and
+  while logged out the route guard answers the prefetch of `/` with a
+  redirect to `/login`; the router caches that and would replay it right
+  after login, bouncing the user back. Dev mode doesn't prefetch, so this
+  only shows up in a production build (`npm run build && npm run start`),
+  where the full journey in `scripts/live-e2e-check.mjs` passes.
 
 ## Design direction
 
