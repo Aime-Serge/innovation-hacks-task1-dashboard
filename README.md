@@ -7,7 +7,7 @@ typed mock service layer that Task 2's API replaces without touching a component
 
 ![Node 22+](https://img.shields.io/badge/node-22%2B-339933) ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6) ![Next.js 16](https://img.shields.io/badge/Next.js-16-000000)
 
-![DevDash dashboard on desktop](docs/screenshots/01-dashboard-desktop.png)
+![DevDash dashboard on desktop](docs/screenshots/12-dashboard-dark.png)
 
 - **Live site:** https://task-management-dashboard-two-beta.vercel.app (deploys from `main`; this rebuild lives on `task/1-frontend` until it is merged)
 - **Demo video:** _add the link after recording, see [DEMO_SCRIPT.md](DEMO_SCRIPT.md)_
@@ -23,7 +23,7 @@ typed mock service layer that Task 2's API replaces without touching a component
 | | |
 | --- | --- |
 | ![Project detail with progress ring](docs/screenshots/03-project-detail.png) **Project detail:** progress ring and that project's tasks | ![Tasks filtered by status and priority](docs/screenshots/04-filtered-tasks.png) **Tasks:** search, filters and sort, all stored in the URL |
-| ![Dashboard in dark theme](docs/screenshots/12-dashboard-dark.png) **Dark theme:** light, dark or system, with no flash on load | ![Mobile navigation drawer](docs/screenshots/11-mobile-drawer.png) **Mobile:** the sidebar becomes a focus-trapping drawer under 1024 px |
+| ![Dashboard in dark theme](docs/screenshots/01-dashboard-desktop.png) **Light Theme:** light, dark or system, with no flash on load | ![Mobile navigation drawer](docs/screenshots/11-mobile-drawer.png) **Mobile:** the sidebar becomes a focus-trapping drawer under 1024 px |
 
 Every dynamic region has all its states, and each is one URL parameter away (`?scenario=`):
 

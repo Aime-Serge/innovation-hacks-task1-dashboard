@@ -10,9 +10,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { createMockAuth } from "@/adapters/mock";
-import { hardNavigate } from "@/lib/navigation";
+import { hardNavigate, safeInternalPath } from "@/lib/navigation";
 import type { User } from "@/schemas";
 import type { AuthService } from "@/services/auth";
 
@@ -43,6 +43,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
   const router = useRouter();
   const pathname = usePathname();
+  // A signed-in user on /login goes where ?next= says, so this redirect never
+  // races the login form's own deep-link navigation (seen in WebKit).
+  const next = safeInternalPath(useSearchParams().get("next"));
 
   useEffect(() => {
     void auth.getSession().then((session) => {
@@ -56,8 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (status === "unauthenticated" && !PUBLIC_PATHS.includes(pathname)) {
       router.replace(`/login?next=${encodeURIComponent(pathname)}`);
     }
-    if (status === "authenticated" && ENTRY_PATHS.includes(pathname)) router.replace("/");
-  }, [status, pathname, router]);
+    if (status === "authenticated" && ENTRY_PATHS.includes(pathname)) router.replace(next);
+  }, [status, pathname, router, next]);
 
   const login = useCallback(
     async (email: string, password: string) => {

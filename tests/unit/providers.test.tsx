@@ -196,6 +196,19 @@ describe("TC-004 session handling", () => {
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/"));
   });
 
+  it("TC-004 a signed-in visitor on /login with ?next= is sent there, not to the dashboard", async () => {
+    document.cookie = "mock_session=user-1";
+    window.localStorage.setItem("devdash_session_user_id", "user-1");
+    nav.pathname = "/login";
+    nav.search = new URLSearchParams("next=%2Ftasks");
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/tasks"));
+  });
+
   it("TC-004 useAuth outside its provider is a programming error", () => {
     expect(() => renderHook(() => useAuth())).toThrow(/AuthProvider/);
   });
