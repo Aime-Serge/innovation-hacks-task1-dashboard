@@ -6,12 +6,16 @@ import prettier from "eslint-config-prettier";
 // TH-02 / NFR-08: layering is enforced here, not by convention.
 // app -> features -> ui, and services -> adapters. Only the ServicesProvider
 // may import an adapter.
-const restrict = (patterns: { group: string[]; message: string }[]) => ({
+type Pattern = { group: string[]; message: string };
+const restrict = (
+  patterns: Pattern[],
+): { "no-restricted-imports": ["error", { patterns: Pattern[] }] } => ({
   "no-restricted-imports": ["error", { patterns }],
 });
 
 export default defineConfig([
   globalIgnores([
+    "postcss.config.mjs",
     ".next/**",
     "out/**",
     "coverage/**",
@@ -32,6 +36,7 @@ export default defineConfig([
     },
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
       "@typescript-eslint/ban-ts-comment": "error",
       "@typescript-eslint/consistent-type-imports": "error",
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
@@ -78,12 +83,11 @@ export default defineConfig([
     ]),
   },
   {
-    files: ["src/app/**", "src/layout/**"],
-    ignores: ["src/app/providers/**"],
+    files: ["src/app/**", "src/layout/**", "src/lib/**"],
     rules: restrict([
       {
         group: ["@/adapters/*", "@/adapters"],
-        message: "Only ServicesProvider may import an adapter.",
+        message: "Only src/providers may import an adapter.",
       },
     ]),
   },
