@@ -32,4 +32,15 @@
 3. Move data fetching to server components and server functions, so the browser ships no query cache, no Zod and no mock adapter. This can reach the budget, and it is a re-architecture of every screen.
 4. Ask the Pack's owners to restate the budget against the framework floor (for example "floor plus 20 KB").
 
-**Related lab results.** `npm run lighthouse` also reports Total Blocking Time of 300 to 500 ms on the mobile profile, which follows from the same script weight. TBT is printed but not gated, because the Pack's budget is INP, which is measured on real interactions in `tests/e2e/inp.spec.ts`.
+**Related lab results** (`npm run lighthouse`, mobile profile, median of three runs after a warm-up, machine under normal load).
+
+| Route | Performance | LCP | CLS | Total Blocking Time |
+| --- | --- | --- | --- | --- |
+| `/` | 84 | 0.76 s | 0.004 | 637 ms |
+| `/projects` | 81 | 0.78 s | 0.002 | 787 ms |
+| `/tasks` | 78 | 0.78 s | 0.005 | 992 ms |
+| `/profile` | 86 | 1.43 s | 0.003 | 552 ms |
+
+LCP and CLS meet their budgets; accessibility, best practices and SEO score 100. The performance score is below the Pack's 90 because blocking time is high, which follows from the same script weight. The script prints TBT but does not gate on it: the Pack's budget is INP, which Lighthouse cannot measure in a lab run and which `tests/e2e/inp.spec.ts` measures on real interactions (worst 136 ms at a 4x throttled CPU, budget 200 ms, passing).
+
+**Earlier finding, fixed.** Before the layout-shift work the dashboard scored a CLS of 0.51 and the task page 0.09, because skeletons were shorter than the content that replaced them. Lists now scroll inside a fixed-height box and the project filter reserves its space.
