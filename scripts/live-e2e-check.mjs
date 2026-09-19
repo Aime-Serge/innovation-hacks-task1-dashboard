@@ -17,6 +17,9 @@ import { chromium } from "@playwright/test";
 const BASE = process.env.BASE_URL || "http://localhost:3000";
 const browser = await chromium.launch({ args: ["--no-sandbox"] });
 const page = await browser.newPage();
+// Live free-tier services can take a while to wake; be patient rather than flaky.
+page.setDefaultTimeout(30000);
+page.setDefaultNavigationTimeout(60000);
 
 const uncaughtErrors = [];
 page.on("pageerror", (e) => uncaughtErrors.push(String(e)));
@@ -50,7 +53,7 @@ await page.fill("#password", password);
 await page.fill("#confirm-password", password);
 await page.click('button[type="submit"]');
 // Registering must not sign you in: it sends you to the login page.
-await page.waitForURL(new RegExp(`^${BASE}/login`), { timeout: 15000 });
+await page.waitForURL(new RegExp(`^${BASE}/login`), { timeout: 30000 });
 check("register redirects to the login page, not the dashboard", page.url().includes("registered=1"));
 check(
   "login page confirms the account was created",
@@ -62,7 +65,7 @@ check("still signed out after registering (dashboard redirects to login)", page.
 await page.fill("#email", email);
 await page.fill("#password", password);
 await page.click('button[type="submit"]');
-await page.waitForURL(`${BASE}/`, { timeout: 15000 });
+await page.waitForURL(`${BASE}/`, { timeout: 30000 });
 check("logging in after registering lands on dashboard", page.url() === `${BASE}/`);
 await page.waitForSelector("h1:has-text('Dashboard')");
 
@@ -70,7 +73,7 @@ await page.waitForSelector("h1:has-text('Dashboard')");
 await page.click('button[aria-haspopup="menu"]');
 await page.waitForSelector('[role="menu"]');
 await page.click('button:has-text("Sign out")');
-await page.waitForURL(new RegExp(`^${BASE}/login`), { timeout: 10000 });
+await page.waitForURL(new RegExp(`^${BASE}/login`), { timeout: 30000 });
 check("logout redirects to /login", page.url().startsWith(`${BASE}/login`));
 
 await page.goto(`${BASE}/settings`, { waitUntil: "networkidle" });
@@ -80,7 +83,7 @@ check("visiting /settings after logout redirects back to /login", page.url().inc
 await page.goto(`${BASE}/forgot-password`, { waitUntil: "networkidle" });
 await page.fill("#email", email);
 await page.click('button:has-text("Send reset link")');
-await page.waitForSelector('a[href*="/reset-password?token="]', { timeout: 10000 });
+await page.waitForSelector('a[href*="/reset-password?token="]', { timeout: 30000 });
 const resetLinkHref = await page.getAttribute('a[href*="/reset-password?token="]', "href");
 check("forgot-password page surfaces a mocked reset link", Boolean(resetLinkHref));
 
@@ -89,7 +92,7 @@ await page.goto(`${BASE}${resetLinkHref}`, { waitUntil: "networkidle" });
 await page.fill("#password", newPassword);
 await page.fill("#confirm-password", newPassword);
 await page.click('button:has-text("Reset password")');
-await page.waitForSelector("text=Your password has been reset", { timeout: 10000 });
+await page.waitForSelector("text=Your password has been reset", { timeout: 30000 });
 check("reset-password flow completes", true);
 
 await page.click('a:has-text("Log in")');
@@ -97,7 +100,7 @@ await page.waitForURL(new RegExp(`^${BASE}/login`));
 await page.fill("#email", email);
 await page.fill("#password", newPassword);
 await page.click('button[type="submit"]');
-await page.waitForURL(`${BASE}/`, { timeout: 10000 });
+await page.waitForURL(`${BASE}/`, { timeout: 30000 });
 check("login with the newly reset password works", page.url() === `${BASE}/`);
 
 // 5. Settings: profile fields pre-populated, avatar upload, change password
@@ -113,21 +116,21 @@ check(
 );
 
 await page.setInputFiles('input[type="file"]', tinyPngPath);
-await page.waitForSelector('button:has-text("Remove")', { timeout: 10000 });
+await page.waitForSelector('button:has-text("Remove")', { timeout: 30000 });
 check("avatar upload succeeds (Remove button now shown)", true);
 
 await page.fill("#current-password", newPassword);
 await page.fill("#new-password", "yetanotherpassword1");
 await page.fill("#confirm-new-password", "yetanotherpassword1");
 await page.click('button:has-text("Change password")');
-await page.waitForSelector("text=Password changed.", { timeout: 10000 });
+await page.waitForSelector("text=Password changed.", { timeout: 30000 });
 check("change-password flow completes", true);
 
 // 6. Delete account
 await page.click('button:has-text("Delete my account")');
 await page.waitForSelector('[role="dialog"]');
 await page.click('button:has-text("Delete account")');
-await page.waitForURL(new RegExp(`^${BASE}/login`), { timeout: 10000 });
+await page.waitForURL(new RegExp(`^${BASE}/login`), { timeout: 30000 });
 check("delete-account flow completes and redirects to /login", page.url().startsWith(`${BASE}/login`));
 
 check("no uncaught client-side exceptions during the run", uncaughtErrors.length === 0, uncaughtErrors.join(" | "));
