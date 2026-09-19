@@ -14,6 +14,10 @@ typed mock service layer that Task 2's API replaces without touching a component
 - **Demo account:** `aime.serge@example.com` / `password123` (mock login, see [ADR-010](docs/adr/ADR-010-mock-auth.md); do not enter a real password)
 - **Status:** the quality gate is not fully green. Two Pack budgets are missed (first-load JavaScript and Lighthouse performance); see [Quality gate](#quality-gate) and [ADR-017](docs/adr/ADR-017-first-load-javascript.md).
 
+## Contents
+
+[Tour](#tour) · [Run it](#run-it-3-commands) · [Features](#what-to-look-at) · [Scenarios](#every-state-is-reachable) · [Tech stack](#tech-stack) · [Architecture](#architecture) · [Scripts](#scripts) · [Quality gate](#quality-gate) · [Security](#security) · [Accessibility](#accessibility) · [Roadmap](#roadmap) · [Contributing](#contributing) · [Known limitations](#known-limitations)
+
 ## Tour
 
 | | |
@@ -82,7 +86,30 @@ Append `?scenario=<name>` to any URL, or use the **Scenario** select in the head
 | `npm run audit` | `npm audit` for high and critical, plus a secret scan |
 | `npm run gate` | All of the above in the Pack's order, stopping at the first failure |
 
+## Tech stack
+
+| Concern | Choice |
+| --- | --- |
+| Framework | Next.js 16 (App Router, Turbopack), React 19, strict TypeScript |
+| Styling | Tailwind CSS v4 driven by design tokens (light, dark, system) |
+| Server state | TanStack Query (loading, error, retry, cache, optimistic updates) |
+| Validation | Zod (`zod/mini`) at the service boundary; every type is inferred from a schema |
+| Accessible primitives | Radix UI (dialog, menu, toast), loaded on first use |
+| Testing | Vitest and Testing Library, Playwright (Chromium, Firefox; WebKit in CI), axe-core, Lighthouse |
+| Quality | ESLint (typescript-eslint strict, layer boundaries), Prettier, `tsc --noEmit` |
+| CI | GitHub Actions, Dependabot |
+
 ## Architecture
+
+```mermaid
+flowchart LR
+  A[app routes] --> F[features]
+  F --> U[ui primitives]
+  F --> S[service interfaces]
+  P[providers] --> M[adapters/mock]
+  P -.Task 2.-> H[adapters/http]
+  S -.implemented by.-> M
+```
 
 ```
 app/ routes  →  features/  →  ui/ primitives and composites
@@ -146,6 +173,27 @@ Every figure below is from a command run on this machine (Node 22, Chromium and 
 **Why three commands fail (NFR-04 and the performance score).** The Pack asks for 170 KB or less of first-load JavaScript per route. This build ships 186 to 188 KB gzipped, and a page with almost none of this app's code shipped 179 KB in the same measurement, so the budget sits below what Next.js 16 and React 19 send on their own. The Lighthouse performance score and the 300 to 1000 ms of blocking time follow from the same script weight. The measurements, what was already trimmed (293 KB down to 186 KB), and four ways to close the gap are in [ADR-017](docs/adr/ADR-017-first-load-javascript.md). Nothing was loosened to hide this: the test and the script still enforce the Pack's numbers.
 
 **Not run.** WebKit (Safari) needs system libraries this machine lacks (`sudo playwright install-deps`); it runs in CI through `PW_WEBKIT=1`. Microsoft Edge was not run. `.github/workflows/ci.yml` has not yet run on GitHub. The manual keyboard and screen-reader checklists (Pack sections 11 B to F) were not done by a person.
+
+## Security
+
+Nonce-based Content-Security-Policy, HSTS and the other required headers, defensive URL parsing, schema-validated API responses, an open-redirect guard, a secret scan and a dependency audit all run in the gate. The mock login is the one deliberate weakness ([ADR-010](docs/adr/ADR-010-mock-auth.md)). Details and how to report a problem: [SECURITY.md](SECURITY.md).
+
+## Accessibility
+
+axe-core runs on every route, in both themes and every scenario (94 checks, 0 violations). The app has a skip link, one `h1` per page with no skipped heading levels, labelled landmarks, a focus-trapping drawer, visible focus, 44 px touch targets on touch layouts, reduced-motion support, and status and priority that never rely on colour alone. Contrast ratios are computed from the design tokens in both themes by a unit test. A manual keyboard and screen-reader pass has not been done yet.
+
+## Roadmap
+
+| Task | Change | Status |
+| --- | --- | --- |
+| 1. Frontend | This repository | Built; two Pack budgets still open ([ADR-017](docs/adr/ADR-017-first-load-javascript.md)) |
+| 2. API | `adapters/http` against the FastAPI service; session in an HttpOnly cookie; same scenarios replayed against the API | Planned |
+| 3. Database | Pagination and server-side search; verify optimistic updates against real persistence | Planned |
+| 4. AI | Streaming, cancel and failure states added to the state matrix; model output rendered as plain text | Planned |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md): branch naming, conventional commits, the definition of done, and the code rules the linter enforces.
 
 ## Known limitations
 
