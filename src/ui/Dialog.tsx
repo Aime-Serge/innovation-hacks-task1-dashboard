@@ -15,7 +15,14 @@ type DialogProps = {
 };
 
 /** Focus is trapped, Escape closes, focus returns to the trigger (Radix). */
-export function Dialog({ open, onOpenChange, title, description, variant = "modal", children }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  variant = "modal",
+  children,
+}: DialogProps) {
   const position =
     variant === "drawer"
       ? "inset-y-0 right-0 w-full max-w-sm"
@@ -33,7 +40,9 @@ export function Dialog({ open, onOpenChange, title, description, variant = "moda
           <div className="mb-4 flex items-start justify-between gap-4">
             <RadixDialog.Title className="text-lg font-semibold">{title}</RadixDialog.Title>
             <RadixDialog.Close asChild>
-              <IconButton label={t("common.close")}><Icon name="x" /></IconButton>
+              <IconButton label={t("common.close")}>
+                <Icon name="x" />
+              </IconButton>
             </RadixDialog.Close>
           </div>
           {description !== undefined && (

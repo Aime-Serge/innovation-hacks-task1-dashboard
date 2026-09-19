@@ -1,4 +1,13 @@
-import type { Activity, Priority, Project, ProjectStatus, Scenario, Task, TaskStatus, User } from "@/schemas";
+import type {
+  Activity,
+  Priority,
+  Project,
+  ProjectStatus,
+  Scenario,
+  Task,
+  TaskStatus,
+  User,
+} from "@/schemas";
 import { addDays, todayIso } from "@/lib/dates";
 import { createRandom, pick } from "./random";
 
@@ -41,17 +50,67 @@ const USERS: User[] = [
 ];
 
 const PROJECTS: { name: string; description: string; status: ProjectStatus; due: number }[] = [
-  { name: "Atlas API Gateway", description: "Rate-limited gateway routing traffic to internal services.", status: "active", due: 21 },
-  { name: "Beacon Notifications", description: "Push, email and SMS delivery pipeline with retries.", status: "active", due: 35 },
-  { name: "Cairn Design System", description: "Shared component library used across product surfaces.", status: "active", due: 14 },
-  { name: "Delta Data Pipeline", description: "Nightly ingestion and reporting jobs for analytics.", status: "active", due: 49 },
-  { name: "Ember Mobile App", description: "Companion app for on-call engineers.", status: "planned", due: 90 },
-  { name: "Flint Auth Service", description: "Single sign-on and session management. Paused pending review.", status: "on_hold", due: 60 },
-  { name: "Grove Analytics", description: "Usage dashboards. Scoped, but no tasks have been created yet.", status: "active", due: 70 },
-  { name: "Harbor Billing", description: "Invoice generation and payment reconciliation.", status: "completed", due: -10 },
+  {
+    name: "Atlas API Gateway",
+    description: "Rate-limited gateway routing traffic to internal services.",
+    status: "active",
+    due: 21,
+  },
+  {
+    name: "Beacon Notifications",
+    description: "Push, email and SMS delivery pipeline with retries.",
+    status: "active",
+    due: 35,
+  },
+  {
+    name: "Cairn Design System",
+    description: "Shared component library used across product surfaces.",
+    status: "active",
+    due: 14,
+  },
+  {
+    name: "Delta Data Pipeline",
+    description: "Nightly ingestion and reporting jobs for analytics.",
+    status: "active",
+    due: 49,
+  },
+  {
+    name: "Ember Mobile App",
+    description: "Companion app for on-call engineers.",
+    status: "planned",
+    due: 90,
+  },
+  {
+    name: "Flint Auth Service",
+    description: "Single sign-on and session management. Paused pending review.",
+    status: "on_hold",
+    due: 60,
+  },
+  {
+    name: "Grove Analytics",
+    description: "Usage dashboards. Scoped, but no tasks have been created yet.",
+    status: "active",
+    due: 70,
+  },
+  {
+    name: "Harbor Billing",
+    description: "Invoice generation and payment reconciliation.",
+    status: "completed",
+    due: -10,
+  },
 ];
 
-const VERBS = ["Add", "Review", "Fix", "Document", "Refactor", "Test", "Migrate", "Profile", "Automate"];
+const VERBS = [
+  "Add",
+  "Review",
+  "Fix",
+  "Document",
+  "Refactor",
+  "Test",
+  "Migrate",
+  "Profile",
+  "Automate",
+];
 const NOUNS = [
   "rate limit config",
   "error codes",
@@ -66,7 +125,16 @@ const NOUNS = [
 ];
 // Due-date offsets from today: overdue, due today, this week and beyond.
 const OFFSETS = [-9, -4, -1, 0, 1, 2, 3, 5, 6, 9, 12, -2, 7, 15];
-const STATUSES: TaskStatus[] = ["done", "todo", "in_progress", "in_review", "todo", "in_progress", "done", "in_review"];
+const STATUSES: TaskStatus[] = [
+  "done",
+  "todo",
+  "in_progress",
+  "in_review",
+  "todo",
+  "in_progress",
+  "done",
+  "in_review",
+];
 const PRIORITIES: Priority[] = ["medium", "high", "low", "urgent", "medium", "low", "high"];
 
 function buildTasks(projects: Project[], scenario: Scenario, today: string): Task[] {
@@ -104,7 +172,12 @@ function buildActivity(projects: Project[], tasks: Task[], now: Date): Activity[
   for (let i = 0; i < 40 && source.length > 0; i += 1) {
     const task = source[(i * 7) % source.length];
     if (task === undefined) break;
-    const type = task.status === "done" && i % 3 === 0 ? "completed" : i % 3 === 1 ? "status_changed" : "created";
+    const type =
+      task.status === "done" && i % 3 === 0
+        ? "completed"
+        : i % 3 === 1
+          ? "status_changed"
+          : "created";
     items.push({
       id: `activity-${i + 1}`,
       actorId: pick(rand, USERS).id,
@@ -166,7 +239,8 @@ function applyEdgeText(fixtures: Fixtures): Fixtures {
 
 /** Builds the dataset for a scenario. Dates are relative to `now`. */
 export function buildFixtures(scenario: Scenario, now: Date = new Date()): Fixtures {
-  if (scenario === "empty") return { users: USERS.map((u) => ({ ...u })), projects: [], tasks: [], activity: [] };
+  if (scenario === "empty")
+    return { users: USERS.map((u) => ({ ...u })), projects: [], tasks: [], activity: [] };
   const today = todayIso(now);
   const projects = makeProjects(scenario, today);
   const tasks = buildTasks(projects, scenario, today);

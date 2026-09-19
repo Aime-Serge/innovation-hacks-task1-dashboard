@@ -36,7 +36,12 @@ export function Textarea({ invalid = false, className, ...rest }: TextareaProps)
   return (
     <textarea
       aria-invalid={invalid || undefined}
-      className={cn(CONTROL, "min-h-20 py-2", invalid ? "border-danger" : "border-line-strong", className)}
+      className={cn(
+        CONTROL,
+        "min-h-20 py-2",
+        invalid ? "border-danger" : "border-line-strong",
+        className,
+      )}
       {...rest}
     />
   );

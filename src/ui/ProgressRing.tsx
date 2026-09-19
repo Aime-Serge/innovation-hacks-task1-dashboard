@@ -21,7 +21,13 @@ export function ProgressRing({ value, label, size = 96 }: ProgressRingProps) {
         viewBox={`0 0 ${size} ${size}`}
         className="-rotate-90"
       >
-        <circle cx={center} cy={center} r={radius} strokeWidth={STROKE} className="fill-none stroke-track" />
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          strokeWidth={STROKE}
+          className="fill-none stroke-track"
+        />
         <circle
           cx={center}
           cy={center}

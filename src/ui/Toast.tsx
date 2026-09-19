@@ -43,9 +43,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 : "border-success bg-success-bg text-success"
             }`}
           >
-            <RadixToast.Description className="flex-1 text-sm">{item.message}</RadixToast.Description>
+            <RadixToast.Description className="flex-1 text-sm">
+              {item.message}
+            </RadixToast.Description>
             <RadixToast.Close asChild>
-              <IconButton label={t("common.dismiss")}><Icon name="x" /></IconButton>
+              <IconButton label={t("common.dismiss")}>
+                <Icon name="x" />
+              </IconButton>
             </RadixToast.Close>
           </RadixToast.Root>
         ))}

@@ -112,7 +112,8 @@ export function createMockAuth(): AuthService {
       saveAccounts();
     },
     async uploadAvatar(userId, file) {
-      if (!AVATAR_TYPES.includes(file.type)) throw fail("Only PNG, JPEG, or WebP images are allowed.");
+      if (!AVATAR_TYPES.includes(file.type))
+        throw fail("Only PNG, JPEG, or WebP images are allowed.");
       if (file.size > AVATAR_MAX_BYTES) throw fail("Image must be 500 KB or smaller.");
       const url = await readFile(file);
       await wait(300);

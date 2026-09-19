@@ -21,7 +21,9 @@ export function Avatar({ name, src, size = "md" }: AvatarProps) {
         SIZES[size],
       )}
     >
-      {src !== undefined && <RadixAvatar.Image src={src} alt="" className="size-full object-cover" />}
+      {src !== undefined && (
+        <RadixAvatar.Image src={src} alt="" className="size-full object-cover" />
+      )}
       <RadixAvatar.Fallback>{initials(name)}</RadixAvatar.Fallback>
     </RadixAvatar.Root>
   );

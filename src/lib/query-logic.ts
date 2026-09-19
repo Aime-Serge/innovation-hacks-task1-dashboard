@@ -78,7 +78,11 @@ export function applyProjectQuery(projects: Project[], query: ProjectQuery): Pro
       return copy.sort((a, b) => sign * a.name.localeCompare(b.name));
     case "due_date":
       return copy.sort((a, b) =>
-        a.dueDate === b.dueDate ? a.name.localeCompare(b.name) : a.dueDate < b.dueDate ? -sign : sign,
+        a.dueDate === b.dueDate
+          ? a.name.localeCompare(b.name)
+          : a.dueDate < b.dueDate
+            ? -sign
+            : sign,
       );
     default:
       return assertNever(query.sort);

@@ -15,8 +15,13 @@ type SearchFieldProps = {
 /** FR-10 / TC-007: the parent sees the value 250ms after typing stops. */
 export function SearchField({ id, label, value, onChange, debounceMs = 250 }: SearchFieldProps) {
   const [draft, setDraft] = useState(value);
+  const [seen, setSeen] = useState(value);
 
-  useEffect(() => setDraft(value), [value]);
+  // Adopt an external change (e.g. "Clear filters") without an effect.
+  if (seen !== value) {
+    setSeen(value);
+    setDraft(value);
+  }
 
   useEffect(() => {
     if (draft === value) return;
