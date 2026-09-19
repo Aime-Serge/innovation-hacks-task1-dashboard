@@ -9,9 +9,9 @@ const fast = (scenario: Scenario) =>
   createMockServices({ scenario, latency: { min: 0, max: 0 }, now: NOW });
 
 // NFR-24 / TH-03: any adapter (mock now, HTTP later) must satisfy this contract.
-describe("TC-081 adapter contract: responses match the schemas", () => {
+describe("TC-100 adapter contract: responses match the schemas", () => {
   it.each(["default", "large", "edge-text"] as const)(
-    "TC-081 %s scenario returns schema-valid projects, tasks, users and activity",
+    "TC-100 %s scenario returns schema-valid projects, tasks, users and activity",
     async (scenario) => {
       const { services } = fast(scenario);
       const projects = await services.projects.list(emptyProjectQuery());
@@ -26,20 +26,20 @@ describe("TC-081 adapter contract: responses match the schemas", () => {
     },
   );
 
-  it("TC-081 the default scenario has realistic mixed data", async () => {
+  it("TC-100 the default scenario has realistic mixed data", async () => {
     const { services } = fast("default");
     const tasks = await services.tasks.list(emptyTaskQuery());
     expect(new Set(tasks.items.map((t) => t.status)).size).toBe(4);
     expect(new Set(tasks.items.map((t) => t.priority)).size).toBe(4);
   });
 
-  it("TC-081 is deterministic for a fixed date", async () => {
+  it("TC-100 is deterministic for a fixed date", async () => {
     const a = await fast("default").services.tasks.list(emptyTaskQuery());
     const b = await fast("default").services.tasks.list(emptyTaskQuery());
     expect(a).toEqual(b);
   });
 
-  it("TC-081 get() resolves to null for an unknown project id", async () => {
+  it("TC-100 get() resolves to null for an unknown project id", async () => {
     expect(await fast("default").services.projects.get("nope")).toBeNull();
   });
 });

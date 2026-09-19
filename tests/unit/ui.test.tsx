@@ -198,7 +198,7 @@ describe("TC-011 dialog and menus (FR-06, FR-08)", () => {
         <a href="/x">Link</a>
       </Dialog>,
     );
-    expect(screen.getByRole("dialog", { name: "Menu" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Menu" })).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
     expect(onOpenChange).toHaveBeenCalledWith(false);
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
@@ -216,7 +216,7 @@ describe("TC-011 dialog and menus (FR-06, FR-08)", () => {
     );
     for (let i = 0; i < 6; i += 1) {
       await userEvent.tab();
-      expect(within(screen.getByRole("dialog")).queryAllByRole("button")).toContain(
+      expect(within(await screen.findByRole("dialog")).queryAllByRole("button")).toContain(
         document.activeElement,
       );
     }
@@ -236,11 +236,11 @@ describe("TC-011 dialog and menus (FR-06, FR-08)", () => {
     );
     screen.getByRole("button", { name: "Open" }).focus();
     await userEvent.keyboard("{Enter}");
-    expect(screen.getByRole("menuitem", { name: "Alpha" })).toBeInTheDocument();
+    expect(await screen.findByRole("menuitem", { name: "Alpha" })).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("menuitem", { name: "Alpha" })).toBeNull();
     await userEvent.click(screen.getByRole("button", { name: "Open" }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Beta" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Beta" }));
     expect(onSelect).toHaveBeenCalledWith("b");
   });
 });
@@ -292,7 +292,7 @@ describe("TC-016 filters and sort (FR-16)", () => {
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: /Sort: Alpha/ }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Beta" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Beta" }));
     expect(onSort).toHaveBeenCalledWith("b");
     await userEvent.click(screen.getByRole("button", { name: /Ascending/ }));
     expect(onDir).toHaveBeenCalledWith("desc");

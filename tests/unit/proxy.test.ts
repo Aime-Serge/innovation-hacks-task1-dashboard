@@ -38,9 +38,9 @@ describe("TC-004 route guard (proxy)", () => {
     expect(proxy(request("/reset-password?token=x", true)).status).toBe(200);
   });
 
-  it("TC-004 static assets, robots and the theme script are outside the matcher", () => {
+  it("TC-004 static assets and robots are outside the matcher", () => {
     const source = config.matcher[0]?.source ?? "";
-    for (const path of ["_next/static/x", "robots.txt", "theme-init.js", "favicon.ico"]) {
+    for (const path of ["_next/static/x", "robots.txt", "favicon.ico"]) {
       expect(new RegExp(`^${source}$`).test(`/${path}`), path).toBe(false);
     }
     expect(new RegExp(`^${source}$`).test("/tasks")).toBe(true);

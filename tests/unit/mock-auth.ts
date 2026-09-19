@@ -38,4 +38,5 @@ export const useAuth = () => ({
   login: authState.login,
   logout: authState.logout,
   setUser: authState.setUser,
+  getUserId: () => authState.user?.id,
 });

@@ -154,7 +154,7 @@ describe("TC-004 session handling", () => {
       </AuthProvider>,
     );
     expect(await screen.findByText("status:unauthenticated")).toBeInTheDocument();
-    expect(nav.replace).toHaveBeenCalledWith("/login?next=%2Ftasks");
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/login?next=%2Ftasks"));
   });
 
   it("TC-004 public pages do not redirect an anonymous visitor", async () => {
@@ -193,7 +193,7 @@ describe("TC-004 session handling", () => {
       </AuthProvider>,
     );
     await screen.findByText("status:authenticated");
-    expect(nav.replace).toHaveBeenCalledWith("/");
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/"));
   });
 
   it("TC-004 useAuth outside its provider is a programming error", () => {
@@ -201,8 +201,8 @@ describe("TC-004 session handling", () => {
   });
 });
 
-describe("TC-081 services provider", () => {
-  it("TC-081 hands features the service interfaces for the selected scenario", async () => {
+describe("TC-100 services provider", () => {
+  it("TC-100 hands features the service interfaces for the selected scenario", async () => {
     nav.search = new URLSearchParams("scenario=empty");
     const wrapper = ({ children }: { children: React.ReactNode }) => (
       <AuthProvider>
@@ -214,11 +214,11 @@ describe("TC-081 services provider", () => {
     expect(page.total).toBe(0);
   });
 
-  it("TC-081 useServices outside its provider is a programming error", () => {
+  it("TC-100 useServices outside its provider is a programming error", () => {
     expect(() => renderHook(() => useServices())).toThrow(/ServicesProvider/);
   });
 
-  it("TC-081 the full provider stack renders its children", async () => {
+  it("TC-100 the full provider stack renders its children", async () => {
     render(
       <Providers>
         <p>hello</p>
@@ -258,7 +258,7 @@ describe("TC-030 small shared pieces", () => {
     expect(screen.getByRole("main")).toBeInTheDocument();
   });
 
-  it("TC-081 assertNever fails loudly for an impossible value", () => {
+  it("TC-100 assertNever fails loudly for an impossible value", () => {
     expect(() => assertNever("surprise" as never)).toThrow(/surprise/);
   });
 });

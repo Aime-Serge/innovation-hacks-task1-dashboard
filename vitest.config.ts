@@ -19,7 +19,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/app/**", "src/**/*.test.*"],
+      exclude: ["src/**/*.test.*"],
       reporter: ["text-summary", "json-summary", "text"],
       // NFR-16: 80% minimum. Never lowered to pass the gate.
       thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },

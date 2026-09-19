@@ -6,6 +6,8 @@ export const nav = {
   search: new URLSearchParams(),
   replace: vi.fn<(href: string) => void>(),
   push: vi.fn<(href: string) => void>(),
+  /** History API updates (filters, scenario): what replaceUrl() calls. */
+  replaceState: vi.fn<(state: unknown, unused: string, url?: string | URL | null) => void>(),
 };
 
 export const resetNav = (): void => {
@@ -13,6 +15,7 @@ export const resetNav = (): void => {
   nav.search = new URLSearchParams();
   nav.replace.mockReset();
   nav.push.mockReset();
+  nav.replaceState.mockReset();
 };
 
 export const usePathname = (): string => nav.pathname;

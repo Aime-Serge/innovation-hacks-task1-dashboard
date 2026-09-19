@@ -114,7 +114,7 @@ describe("TC-030 cards show every field (FR-11, FR-12)", () => {
       />,
     );
     await userEvent.selectOptions(screen.getByRole("combobox"), "done");
-    expect(onStatusChange).toHaveBeenCalledWith("done");
+    expect(onStatusChange).toHaveBeenCalledWith(expect.any(String), "done");
   });
 
   it("TC-030 the project card shows name, status, due date, progress and counts", () => {
@@ -177,11 +177,13 @@ describe("TC-053 URL state (FR-17, TH-02)", () => {
     nav.search = new URLSearchParams("scenario=empty");
     const { result } = renderHook(() => useTaskQuery());
     act(() => result.current.update({ q: " hi ", status: ["done"] }));
-    expect(nav.replace).toHaveBeenCalledWith("/tasks?scenario=empty&q=hi&status=done", {
-      scroll: false,
-    });
+    expect(nav.replaceState).toHaveBeenCalledWith(
+      null,
+      "",
+      "/tasks?scenario=empty&q=hi&status=done",
+    );
     act(() => result.current.clear());
-    expect(nav.replace).toHaveBeenLastCalledWith("/tasks?scenario=empty", { scroll: false });
+    expect(nav.replaceState).toHaveBeenLastCalledWith(null, "", "/tasks?scenario=empty");
   });
 
   it("TC-053 the project list uses the same contract", () => {
@@ -195,11 +197,9 @@ describe("TC-053 URL state (FR-17, TH-02)", () => {
       dir: "desc",
     });
     act(() => result.current.update({ sort: "name", dir: "asc" }));
-    expect(nav.replace).toHaveBeenCalledWith("/projects?q=x&status=active", { scroll: false });
+    expect(nav.replaceState).toHaveBeenCalledWith(null, "", "/projects?q=x&status=active");
     act(() => result.current.clear());
-    expect(nav.replace).toHaveBeenLastCalledWith("/projects?sort=due_date&dir=desc", {
-      scroll: false,
-    });
+    expect(nav.replaceState).toHaveBeenLastCalledWith(null, "", "/projects?sort=due_date&dir=desc");
     expect(emptyTaskQuery().q).toBe("");
   });
 });
@@ -208,9 +208,9 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
   it("TC-050 lists tasks with a live count and caps rendering for large sets", async () => {
     open(<TasksView />, "large");
     expect(await screen.findByText("500 tasks")).toBeInTheDocument();
-    expect(screen.getAllByRole("article")).toHaveLength(48);
+    expect(screen.getAllByRole("article")).toHaveLength(24);
     await userEvent.click(screen.getByRole("button", { name: /Show more/ }));
-    expect(screen.getAllByRole("article")).toHaveLength(96);
+    expect(screen.getAllByRole("article")).toHaveLength(48);
     expect(screen.getByRole("status")).toHaveTextContent("500 tasks");
   });
 
@@ -228,7 +228,7 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
     open(<TasksView />, "empty");
     expect(await screen.findByRole("heading", { name: "No tasks yet" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Create a task" }));
-    expect(screen.getByRole("dialog", { name: "New task" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "New task" })).toBeInTheDocument();
   });
 
   it("TC-072 the error scenario shows an error and Retry refetches", async () => {
@@ -243,12 +243,12 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
     open(<TasksView />);
     await screen.findByText(/\d+ tasks/);
     await userEvent.click(screen.getByRole("checkbox", { name: "To do" }));
-    expect(nav.replace).toHaveBeenCalledWith("/tasks?status=todo", { scroll: false });
+    expect(nav.replaceState).toHaveBeenCalledWith(null, "", "/tasks?status=todo");
     await userEvent.click(screen.getByRole("checkbox", { name: "Urgent" }));
-    expect(nav.replace).toHaveBeenLastCalledWith("/tasks?priority=urgent", { scroll: false });
+    expect(nav.replaceState).toHaveBeenLastCalledWith(null, "", "/tasks?priority=urgent");
     await userEvent.click(screen.getByRole("button", { name: /Sort: Due date/ }));
-    await userEvent.click(screen.getByRole("menuitem", { name: "Title" }));
-    expect(nav.replace).toHaveBeenLastCalledWith("/tasks?sort=title", { scroll: false });
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Title" }));
+    expect(nav.replaceState).toHaveBeenLastCalledWith(null, "", "/tasks?sort=title");
   });
 
   it("TC-019 update-fails rolls the status back and shows an error toast", async () => {
@@ -284,7 +284,7 @@ describe("TC-054 tasks page (FR-15..19, FR-21)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await screen.findByText("Enter a title of 1 to 120 characters.")).toBeInTheDocument();
     expect(screen.getByText("Choose the project this task belongs to.")).toBeInTheDocument();
-    const dialog = screen.getByRole("dialog", { name: "New task" });
+    const dialog = await screen.findByRole("dialog", { name: "New task" });
     await userEvent.type(within(dialog).getByLabelText("Title"), "Brand new task");
     const project = within(dialog).getByLabelText<HTMLSelectElement>("Project");
     await userEvent.selectOptions(project, project.options[1]?.value ?? "");
@@ -305,7 +305,7 @@ describe("TC-054 projects pages (FR-11, FR-14)", () => {
     open(<ProjectsView />, "empty");
     expect(await screen.findByRole("heading", { name: "No projects yet" })).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Create a project" }));
-    expect(screen.getByRole("dialog", { name: "New project" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "New project" })).toBeInTheDocument();
   });
 
   it("TC-054 a search with no match shows no-results, not the empty state", async () => {
@@ -357,9 +357,9 @@ describe("TC-054 projects pages (FR-11, FR-14)", () => {
     open(<ProjectDetailView id="project-1" />);
     await screen.findByRole("progressbar");
     await userEvent.click(screen.getByRole("button", { name: "Edit" }));
-    expect(screen.getByRole("dialog", { name: "Edit project" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Edit project" })).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
     await userEvent.click(screen.getByRole("button", { name: "New task" }));
-    expect(screen.getByRole("dialog", { name: "New task" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "New task" })).toBeInTheDocument();
   });
 });

@@ -7,11 +7,11 @@ import { contentSecurityPolicy } from "@/proxy";
 import { findSecrets, findSensitivePublicVars } from "../../scripts/lib/secrets";
 
 describe("TC-016 response headers (NFR-16, TH-06)", () => {
-  it("TC-016 CSP matches the Pack: nonce scripts, no inline styles, no framing", () => {
+  it("TC-016 CSP matches the Pack: nonce scripts, nonce styles only, no framing", () => {
     const csp = contentSecurityPolicy("abc123", false);
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("script-src 'self' 'nonce-abc123'");
-    expect(csp).toContain("style-src 'self'");
+    expect(csp).toContain("style-src 'self' 'nonce-abc123'");
     expect(csp).toContain("img-src 'self' data:");
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("base-uri 'self'");

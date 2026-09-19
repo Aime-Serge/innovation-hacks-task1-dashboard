@@ -86,7 +86,7 @@ describe("TC-010 navigation (FR-05..08)", () => {
   it("TC-011 the drawer opens from the menu button, lists the links, closes on Escape and on link selection", async () => {
     render(<MobileNav />);
     await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
-    const dialog = screen.getByRole("dialog", { name: "Menu" });
+    const dialog = await screen.findByRole("dialog", { name: "Menu" });
     expect(dialog).toBeInTheDocument();
     await userEvent.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -100,7 +100,7 @@ describe("TC-010 navigation (FR-05..08)", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Account menu for Aime Serge UKOBIZABA" }),
     );
-    await userEvent.click(screen.getByRole("menuitem", { name: "Log out" }));
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Log out" }));
     expect(authState.logout).toHaveBeenCalled();
   });
 
@@ -131,7 +131,7 @@ describe("TC-010 navigation (FR-05..08)", () => {
     const select = screen.getByRole("combobox", { name: "Scenario" });
     expect(screen.getAllByRole("option")).toHaveLength(9);
     await userEvent.selectOptions(select, "error");
-    expect(nav.replace).toHaveBeenCalledWith("/tasks?q=x&scenario=error");
+    expect(nav.replaceState).toHaveBeenCalledWith(null, "", "/tasks?q=x&scenario=error");
   });
 });
 
