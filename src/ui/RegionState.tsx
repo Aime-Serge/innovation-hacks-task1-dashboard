@@ -3,6 +3,7 @@ import { t } from "@/i18n";
 import { Button } from "./Button";
 import { EmptyState } from "./EmptyState";
 import { ErrorState } from "./ErrorState";
+import type { IconName } from "./Icon";
 
 export type RegionStatus = "loading" | "error" | "success";
 
@@ -13,7 +14,7 @@ type RegionStateProps<T> = {
   /** True when a search or filter is active, so an empty result is "no results". */
   filtered: boolean;
   skeleton: ReactNode;
-  empty: { title: string; body?: string; action?: ReactNode };
+  empty: { icon?: IconName; title: string; body?: string; action?: ReactNode };
   onRetry: () => void;
   onClearFilters?: () => void;
   children: (items: readonly T[]) => ReactNode;

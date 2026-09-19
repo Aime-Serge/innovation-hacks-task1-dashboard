@@ -127,8 +127,10 @@ export const emptyProjectQuery = (): ProjectQuery => ({
   dir: "asc",
 });
 
-export type NewProject = Omit<Project, "id">;
-export type NewTask = Omit<Task, "id">;
+export const NewProject = Project.omit({ id: true });
+export type NewProject = z.infer<typeof NewProject>;
+export const NewTask = Task.omit({ id: true });
+export type NewTask = z.infer<typeof NewTask>;
 
 /** The error envelope, shared with the Task 2 FastAPI backend. */
 export const ApiErrorBody = z.object({
