@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { storeScenario, useScenario } from "@/app/providers/scenario";
+import { storeScenario, useScenario } from "@/providers/scenario";
 import { t } from "@/i18n";
 import { Scenario } from "@/schemas";
 import { Select } from "@/ui/Input";

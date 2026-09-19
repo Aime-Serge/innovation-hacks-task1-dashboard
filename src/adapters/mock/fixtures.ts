@@ -213,8 +213,8 @@ function makeProjects(scenario: Scenario, today: string): Project[] {
 
 const LONG_WORD = "Supercalifragilisticexpialidocious".repeat(2);
 const EDGE_NAMES = [
-  `${"Extraordinarily long project name that keeps going ".repeat(2)}`.slice(0, 80),
-  `${LONG_WORD}`.slice(0, 80),
+  "Extraordinarily long project name that keeps going ".repeat(2).slice(0, 80),
+  LONG_WORD.slice(0, 80),
   "Launch 🚀 planning 🎉 sprint ✨ retro",
   "مشروع لوحة التحكم للمطورين",
   "פרויקט לוח בקרה למפתחים",

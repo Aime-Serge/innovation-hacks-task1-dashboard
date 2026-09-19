@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { useAuth } from "@/app/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { PageHeader } from "@/layout/PageHeader";
 import { t, tCount } from "@/i18n";
 import { formatDate } from "@/lib/dates";

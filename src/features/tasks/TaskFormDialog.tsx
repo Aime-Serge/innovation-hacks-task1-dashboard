@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { t } from "@/i18n";
+import { formText } from "@/lib/form";
 import { NewTask, Priority, TaskStatus, type Project, type Task, type User } from "@/schemas";
 import { Button } from "@/ui/Button";
 import { Dialog } from "@/ui/Dialog";
@@ -29,10 +30,10 @@ function TaskForm({ onOpenChange, task, projects, users, defaultProjectId }: Pro
     onOpenChange(false);
   });
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const text = (name: string) => String(form.get(name) ?? "");
+    const text = (name: string) => formText(form, name);
     const parsed = NewTask.safeParse({
       title: text("title").trim(),
       description: text("description").trim(),

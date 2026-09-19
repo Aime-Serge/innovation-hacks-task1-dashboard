@@ -39,7 +39,11 @@ export class Behavior {
       const timer = setTimeout(resolve, ms);
       signal?.addEventListener("abort", () => {
         clearTimeout(timer);
-        reject(signal.reason);
+        reject(
+          signal.reason instanceof Error
+            ? signal.reason
+            : new DOMException("Aborted", "AbortError"),
+        );
       });
     });
   }

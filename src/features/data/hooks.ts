@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useServices } from "@/app/providers/ServicesProvider";
+import { useServices } from "@/providers/ServicesProvider";
 import { reportError } from "@/lib/report-error";
 import {
   emptyTaskQuery,

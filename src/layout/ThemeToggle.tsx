@@ -1,6 +1,6 @@
 "use client";
 
-import { useTheme } from "@/app/providers/ThemeProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import { t } from "@/i18n";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";

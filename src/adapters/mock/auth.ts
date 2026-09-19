@@ -34,7 +34,10 @@ function account(userId: string) {
 function readFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
+    reader.onload = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(fail("Failed to read the image."));
+    };
     reader.onerror = () => reject(fail("Failed to read the image."));
     reader.readAsDataURL(file);
   });

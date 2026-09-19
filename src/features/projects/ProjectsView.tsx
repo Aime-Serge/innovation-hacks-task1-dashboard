@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useAuth } from "@/app/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { Grid } from "@/layout/Grid";
 import { PageHeader } from "@/layout/PageHeader";
 import { t, tCount } from "@/i18n";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/app/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 import { t } from "@/i18n";
 import { Avatar } from "@/ui/Avatar";
 import { DropdownMenu } from "@/ui/DropdownMenu";

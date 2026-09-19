@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type SyntheticEvent } from "react";
 import { t } from "@/i18n";
+import { formText } from "@/lib/form";
 import { NewProject, ProjectStatus, type Project } from "@/schemas";
 import { Button } from "@/ui/Button";
 import { Dialog } from "@/ui/Dialog";
@@ -27,10 +28,10 @@ function ProjectForm({ onOpenChange, project, ownerId }: Props) {
     onOpenChange(false);
   });
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const text = (name: string) => String(form.get(name) ?? "");
+    const text = (name: string) => formText(form, name);
     const parsed = NewProject.safeParse({
       name: text("name").trim(),
       description: text("description").trim(),
