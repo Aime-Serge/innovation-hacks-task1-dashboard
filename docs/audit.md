@@ -18,7 +18,7 @@ table and the requirement table in `docs/traceability.md`.
 
 | # | Finding | Pack item | Severity | Action |
 | - | --- | --- | --- | --- |
-| 1 | Four JavaScript files: `eslint.config.mjs`, `postcss.config.mjs`, `scripts/qa-checks.mjs`, `scripts/live-e2e-check.mjs` | NFR-11, TH-01 (TC-082) | Must | ESLint config and both scripts rewritten in TypeScript; `postcss.config.mjs` stays as the one allowlisted file (Tailwind only reads it as JavaScript). `check:no-js` enforces this |
+| 1 | Four JavaScript files: `eslint.config.mjs`, `postcss.config.mjs`, `scripts/qa-checks.mjs`, `scripts/live-e2e-check.mjs` | NFR-11, TH-01 (TC-082) | Must | ESLint config and both scripts rewritten in TypeScript; `postcss.config.mjs` became the declarative `postcss.config.json`, so the allowlist is empty. `check:no-js` enforces this |
 | 2 | `allowJs: true`; `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noImplicitOverride` missing | Section 7 TypeScript rules (TC-081) | Must | `tsconfig.json` is strict with all four, `allowJs: false` |
 | 3 | No Zod: types were hand-written and no response was validated | Section 7, TH-03 | Must | `src/schemas` is the source of every type; the mock adapter parses every response |
 | 4 | Components imported mock data directly | Section 7 (ADR-003), NFR-24 | Must | Service interfaces in `src/services`; only `src/providers` imports an adapter; ESLint enforces it |

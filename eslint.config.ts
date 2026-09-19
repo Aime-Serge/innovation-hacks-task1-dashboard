@@ -15,7 +15,6 @@ const restrict = (
 
 export default defineConfig([
   globalIgnores([
-    "postcss.config.mjs",
     ".next/**",
     "out/**",
     "coverage/**",

@@ -78,7 +78,7 @@ Append `?scenario=<name>` to any URL, or use the **Scenario** select in the head
 | `npm run dev` / `build` / `start` | Development server, production build, production server |
 | `npm run typecheck` | `tsc --noEmit` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` |
 | `npm run lint` | ESLint (typescript-eslint strict, layer boundaries, no `any`, no literal JSX text), Prettier, no raw design values outside the token file |
-| `npm run check:no-js` | Fails on any JavaScript outside the allowlist (`postcss.config.mjs`) |
+| `npm run check:no-js` | Fails on any `.js`, `.jsx`, `.mjs` or `.cjs` file (the allowlist is empty; PostCSS is configured in `postcss.config.json`) |
 | `npm test` | Vitest unit, component and contract tests with an 80% coverage threshold |
 | `npm run test:e2e` | Playwright journeys per scenario at 3 viewports, plus security headers, JS budget and interaction latency |
 | `npm run test:a11y` | axe on every route, in both themes and every scenario |
@@ -162,7 +162,7 @@ Every figure below is from a command run on this machine (Node 22, Chromium and 
 | --- | --- | --- |
 | `npm run typecheck` | **Pass** | 0 errors |
 | `npm run lint` | **Pass** | ESLint 0 problems (`--max-warnings 0`), Prettier clean, no raw design values outside `tokens.css` |
-| `npm run check:no-js` | **Pass** | allowlist: `postcss.config.mjs` only |
+| `npm run check:no-js` | **Pass** | no JavaScript files, empty allowlist |
 | `npm test` | **Pass** | 15 files, 235 tests. Coverage: 92.7% lines, 91.2% statements, 88.7% functions, 87.5% branches (threshold 80%) |
 | `npm run test:e2e` | **Fail** | Chromium and Firefox: 134 passed, 6 failed, 6 skipped. All 6 failures are the JavaScript budget (NFR-04, below); the skips are the same test, which only runs in Chromium. Interaction latency (`@perf`, 4x throttled CPU, run alone) worst interaction 128 to 144 ms in four quiet runs against a 200 ms budget: pass. It is sensitive to machine load: one run with a stray headless Chrome eating CPU measured 264 ms and failed. The npm script stops at the first failing step, so run it with `npx playwright test tests/e2e --grep @perf --project=perf` |
 | `npm run test:a11y` | **Pass** | 94 of 94: axe (WCAG 2.2 AA tags) found 0 violations across every route, both themes and all nine scenarios, plus the dialog, drawer, menu, toast and 404 |
