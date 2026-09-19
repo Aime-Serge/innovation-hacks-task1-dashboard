@@ -5,9 +5,27 @@ Innovation Hacks Full Stack Development Internship: a strict-TypeScript Next.js
 frontend, built to the _Engineering Standards Pack (Task 1)_ and running on a
 typed mock service layer that Task 2's API replaces without touching a component.
 
+![Node 22+](https://img.shields.io/badge/node-22%2B-339933) ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6) ![Next.js 16](https://img.shields.io/badge/Next.js-16-000000)
+
+![DevDash dashboard on desktop](docs/screenshots/01-dashboard-desktop.png)
+
 - **Live site:** https://task-management-dashboard-two-beta.vercel.app (deploys from `main`; this rebuild lives on `task/1-frontend` until it is merged)
 - **Demo video:** _add the link after recording, see [DEMO_SCRIPT.md](DEMO_SCRIPT.md)_
 - **Demo account:** `aime.serge@example.com` / `password123` (mock login, see [ADR-010](docs/adr/ADR-010-mock-auth.md); do not enter a real password)
+- **Status:** the quality gate is not fully green. Two Pack budgets are missed (first-load JavaScript and Lighthouse performance); see [Quality gate](#quality-gate) and [ADR-017](docs/adr/ADR-017-first-load-javascript.md).
+
+## Tour
+
+| | |
+| --- | --- |
+| ![Project detail with progress ring](docs/screenshots/03-project-detail.png) **Project detail:** progress ring and that project's tasks | ![Tasks filtered by status and priority](docs/screenshots/04-filtered-tasks.png) **Tasks:** search, filters and sort, all stored in the URL |
+| ![Dashboard in dark theme](docs/screenshots/12-dashboard-dark.png) **Dark theme:** light, dark or system, with no flash on load | ![Mobile navigation drawer](docs/screenshots/11-mobile-drawer.png) **Mobile:** the sidebar becomes a focus-trapping drawer under 1024 px |
+
+Every dynamic region has all its states, and each is one URL parameter away (`?scenario=`):
+
+| Loading | Empty | Error with Retry |
+| --- | --- | --- |
+| ![Loading skeletons](docs/screenshots/05-loading-state.png) | ![Empty state](docs/screenshots/06-empty-state.png) | ![Error state](docs/screenshots/07-error-state.png) |
 
 ## Run it (3 commands)
 
