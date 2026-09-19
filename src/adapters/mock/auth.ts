@@ -25,6 +25,11 @@ function persistSession(userId: string | null): void {
   else window.localStorage.removeItem(SESSION_KEY);
 }
 
+function readSessionCookie(): string | null {
+  const match = new RegExp(`(?:^|; )${SESSION_COOKIE}=([^;]+)`).exec(document.cookie);
+  return match?.[1] ?? null;
+}
+
 function account(userId: string) {
   const found = findById(userId);
   if (found === undefined) throw fail("Account not found.", 404, "not_found");
@@ -48,8 +53,12 @@ export function createMockAuth(): AuthService {
     async getSession(): Promise<User | null> {
       if (typeof window === "undefined") return null;
       await wait(150);
-      const id = window.localStorage.getItem(SESSION_KEY);
-      return id === null ? null : (findById(id)?.user ?? null);
+      const id = window.localStorage.getItem(SESSION_KEY) ?? readSessionCookie();
+      const found = id === null ? undefined : findById(id);
+      // A cookie for an account that no longer exists would bounce between the
+      // route guard and the login page, so drop it.
+      if (found === undefined && id !== null) persistSession(null);
+      return found?.user ?? null;
     },
     async login(email, password) {
       await wait(400);

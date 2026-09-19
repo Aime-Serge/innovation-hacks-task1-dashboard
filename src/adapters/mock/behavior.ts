@@ -4,7 +4,7 @@ import { ServiceError } from "@/services/types";
 export type Resource = "projects" | "tasks" | "users" | "activity";
 export type Latency = { min: number; max: number };
 
-export const DEFAULT_LATENCY: Latency = { min: 300, max: 900 };
+export const DEFAULT_LATENCY: Latency = { min: 150, max: 400 };
 const LOADING_LATENCY_MS = 3000;
 
 const SERVER_ERROR = () =>

@@ -1,3 +1,4 @@
+import { array } from "zod/mini";
 import { Activity, Project, Task, User, pageOf } from "@/schemas";
 import type { Scenario } from "@/schemas";
 import { applyProjectQuery, applyTaskQuery } from "@/lib/query-logic";
@@ -11,7 +12,8 @@ export type MockOptions = {
   scenario: Scenario;
   latency?: Latency;
   now?: Date;
-  actorId?: string;
+  /** Read at call time, so a session that starts later does not rebuild the mock. */
+  getActorId?: () => string | undefined;
 };
 
 export type MockSession = { services: Services; snapshot: () => Fixtures };
@@ -23,7 +25,30 @@ const notFound = (what: string) => new ServiceError("not_found", `${what} was no
  * and resets on reload; nothing about projects or tasks touches browser storage.
  */
 export function createMockServices(options: MockOptions): MockSession {
-  const data = buildFixtures(options.scenario, options.now);
+  // Built on the first request, not at construction: generating the fixtures
+  // during hydration would add to the page's blocking time.
+  let fixtures: Fixtures | undefined;
+  const built = (): Fixtures => (fixtures ??= buildFixtures(options.scenario, options.now));
+  const data = {
+    get users() {
+      return built().users;
+    },
+    get projects() {
+      return built().projects;
+    },
+    set projects(value: Project[]) {
+      built().projects = value;
+    },
+    get tasks() {
+      return built().tasks;
+    },
+    set tasks(value: Task[]) {
+      built().tasks = value;
+    },
+    get activity() {
+      return built().activity;
+    },
+  };
   const behavior = new Behavior(options.scenario, options.latency);
   const now = () => options.now ?? new Date();
   let nextId = 1000;
@@ -32,7 +57,7 @@ export function createMockServices(options: MockOptions): MockSession {
   const record = (type: Activity["type"], task: Task) => {
     data.activity.unshift({
       id: newId("activity"),
-      actorId: options.actorId ?? "user-1",
+      actorId: options.getActorId?.() ?? "user-1",
       projectId: task.projectId,
       taskId: task.id,
       type,
@@ -128,7 +153,7 @@ export function createMockServices(options: MockOptions): MockSession {
     async list(signal) {
       await behavior.wait(signal);
       behavior.checkList("users");
-      return User.array().parse(allUsers());
+      return array(User).parse(allUsers());
     },
     async get(id, signal) {
       await behavior.wait(signal);
@@ -152,9 +177,9 @@ export function createMockServices(options: MockOptions): MockSession {
     async list(limit, signal) {
       await behavior.wait(signal);
       behavior.checkList("activity");
-      return Activity.array().parse(data.activity.slice(0, limit));
+      return array(Activity).parse(data.activity.slice(0, limit));
     },
   };
 
-  return { services: { projects, tasks, users, activity }, snapshot: () => data };
+  return { services: { projects, tasks, users, activity }, snapshot: built };
 }
