@@ -10,7 +10,7 @@
     "lint": "eslint . && prettier --check . && jiti scripts/check-tokens.ts",
     "format": "prettier --write .",
     "check:no-js": "jiti scripts/check-no-js.ts",
-    "test": "vitest run --coverage",
+    "test": "vitest run --coverage --configLoader runner",
     "test:e2e": "playwright test tests/e2e",
     "test:a11y": "playwright test tests/a11y --project=chromium",
     "lighthouse": "jiti scripts/lighthouse.ts",
