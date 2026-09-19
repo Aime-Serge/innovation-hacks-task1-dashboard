@@ -41,6 +41,6 @@
 | `/tasks` | 78 | 0.78 s | 0.005 | 992 ms |
 | `/profile` | 86 | 1.43 s | 0.003 | 552 ms |
 
-LCP and CLS meet their budgets; accessibility, best practices and SEO score 100. The performance score is below the Pack's 90 because blocking time is high, which follows from the same script weight. The script prints TBT but does not gate on it: the Pack's budget is INP, which Lighthouse cannot measure in a lab run and which `tests/e2e/inp.spec.ts` measures on real interactions (worst 136 ms at a 4x throttled CPU, budget 200 ms, passing).
+LCP and CLS meet their budgets; accessibility, best practices and SEO score 100. The performance score is below the Pack's 90 because blocking time is high, which follows from the same script weight. The script prints TBT but does not gate on it: the Pack's budget is INP, which Lighthouse cannot measure in a lab run and which `tests/e2e/inp.spec.ts` measures on real interactions (worst interaction 128 to 144 ms at a 4x throttled CPU in four quiet runs, budget 200 ms; one run with a stray Chrome process eating CPU measured 264 ms and failed).
 
 **Earlier finding, fixed.** Before the layout-shift work the dashboard scored a CLS of 0.51 and the task page 0.09, because skeletons were shorter than the content that replaced them. Lists now scroll inside a fixed-height box and the project filter reserves its space.

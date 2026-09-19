@@ -47,7 +47,7 @@ TC-093 (dependency audit) is `npm run audit`.
 | --- | --- | --- | --- |
 | NFR-01 | LCP 2.5 s or less (mobile) | Done (0.76 to 1.43 s) | TC-090 (`npm run lighthouse`) |
 | NFR-02 | CLS under 0.1 | Done (0.002 to 0.005) | TC-090 (`npm run lighthouse`) |
-| NFR-03 | INP 200 ms or less | Done (worst 136 ms at 4x CPU throttle) | TC-090 (`tests/e2e/inp.spec.ts`) |
+| NFR-03 | INP 200 ms or less | Done on a quiet machine (worst interaction 128 to 144 ms at 4x CPU throttle in four runs); one run under heavy load measured 264 ms | TC-090 (`tests/e2e/inp.spec.ts`) |
 | NFR-04 | 170 KB or less of first-load JavaScript per route | **Not done** (186 to 188 KB against 170 KB) | TC-090 (`tests/e2e/bundle.spec.ts`), ADR-017 |
 | NFR-05 | WCAG 2.2 AA, zero axe violations | Done (0 violations, 94 checks) | TC-091 |
 | NFR-06 | Keyboard operation, visible focus | Done (automated part); manual checklist not run | TC-010, TC-011, TC-012 |
