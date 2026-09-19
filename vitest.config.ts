@@ -4,14 +4,19 @@ import path from "node:path";
 
 export default defineConfig({
   plugins: [react()],
+  resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     globals: true,
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "."),
+    include: ["tests/unit/**/*.test.{ts,tsx}", "tests/contract/**/*.test.ts", "src/**/*.test.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/app/**", "src/**/*.test.*"],
+      reporter: ["text-summary", "json-summary"],
+      // NFR-16: 80% minimum. Never lowered to pass the gate.
+      thresholds: { lines: 80, statements: 80, functions: 80, branches: 80 },
     },
   },
 });

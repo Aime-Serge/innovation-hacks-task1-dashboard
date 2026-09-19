@@ -26,7 +26,7 @@ export function Dialog({
   const position =
     variant === "drawer"
       ? "inset-y-0 right-0 w-full max-w-sm"
-      : "left-1/2 top-1/2 w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2";
+      : "inset-x-4 top-1/2 mx-auto max-w-lg -translate-y-1/2";
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
