@@ -30,8 +30,11 @@ test.describe("TC-010 navigation", () => {
     await page.keyboard.press("Tab"); // skip link
     await page.keyboard.press("Tab"); // Dashboard
     await page.keyboard.press("Tab"); // Projects
-    await expect(page.getByRole("link", { name: "Projects" })).toBeFocused();
+    await expect(
+      page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Projects" }),
+    ).toBeFocused();
     const outline = await page
+      .getByRole("navigation", { name: "Primary" })
       .getByRole("link", { name: "Projects" })
       .evaluate((el) => getComputedStyle(el).outlineStyle);
     expect(outline).not.toBe("none");

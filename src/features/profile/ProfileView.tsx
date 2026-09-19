@@ -25,19 +25,22 @@ export function ProfileView() {
         : [profileStats(user.id, tasks.data.items, todayIso())],
     [user, tasks.data],
   );
-  if (user === null) return null;
-
   return (
     <>
       <PageHeader title={t("profile.title")} description={t("profile.description")} />
-      <Card className="mb-6 flex flex-wrap items-center gap-4">
-        <Avatar name={user.name} size="lg" />
-        <div className="min-w-0">
-          <p className="break-words text-lg font-semibold">{user.name}</p>
-          <p className="break-all text-sm text-muted">{user.email}</p>
-          <p className="text-sm text-muted">{t(`role.${user.role}`)}</p>
-        </div>
-      </Card>
+      {user === null ? (
+        // Hold the card's space until the session resolves, so the footer does not jump.
+        <Skeleton className="mb-6 h-28" />
+      ) : (
+        <Card className="mb-6 flex flex-wrap items-center gap-4">
+          <Avatar name={user.name} size="lg" />
+          <div className="min-w-0">
+            <p className="break-words text-lg font-semibold">{user.name}</p>
+            <p className="break-all text-sm text-muted">{user.email}</p>
+            <p className="text-sm text-muted">{t(`role.${user.role}`)}</p>
+          </div>
+        </Card>
+      )}
       <section aria-labelledby="stats-heading" className="mb-6">
         <h2 id="stats-heading" className="mb-3 text-lg font-semibold">
           {t("profile.stats")}
@@ -76,7 +79,7 @@ export function ProfileView() {
         <h2 id="edit-heading" className="mb-3 text-lg font-semibold">
           {t("profile.edit")}
         </h2>
-        <ProfileForm user={user} />
+        {user === null ? <Skeleton className="h-56 max-w-md" /> : <ProfileForm user={user} />}
       </section>
     </>
   );
