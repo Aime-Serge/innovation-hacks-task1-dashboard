@@ -24,7 +24,7 @@ type.
 
 > Just shipped Task 1 of my @Innovation Hacks Full Stack Development Internship — a Developer Productivity Dashboard built with Next.js, TypeScript, and Tailwind CSS v4. Loading/empty/error states on every view, zero accessibility violations on an automated scan, and a component architecture designed so the real API in Task 2 is a drop-in swap, not a rewrite.
 >
-> Repo + demo below. #FullStackDevelopment #NextJS #WebDevelopment #InnovationHacks
+> Live demo + repo below. #FullStackDevelopment #NextJS #WebDevelopment #InnovationHacks
 
 ## Before you post
 
@@ -33,3 +33,9 @@ type.
 - [ ] Tag applied via LinkedIn's mention dropdown, not typed as plain text
 - [ ] Video or screenshots attached to the post itself, not just linked
 - [ ] Repo + demo links added as the first comment (LinkedIn deprioritizes posts with outbound links in the body)
+
+## First comment (outbound links go here)
+
+Live: https://task-management-dashboard-two-beta.vercel.app (demo login: aime.serge@example.com / password123)
+Repo: https://github.com/Aime-Serge/innovation-hacks-task1-dashboard
+Demo: [add after recording]
