@@ -43,7 +43,7 @@ export function RegisterForm() {
     setSubmitting(true);
     try {
       await register(name, email, password);
-      hardNavigate("/");
+      hardNavigate("/login?registered=1");
     } catch (err) {
       if (err instanceof MockAuthError && err.message.includes("already exists")) {
         setEmailError(err.message);

@@ -63,10 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus("authenticated");
   }, []);
 
+  // Registering creates the account but does not sign anyone in; the
+  // session state is deliberately left untouched.
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const registeredUser = await mockRegister(name, email, password);
-    setUser(registeredUser);
-    setStatus("authenticated");
+    await mockRegister(name, email, password);
   }, []);
 
   const logout = useCallback(async () => {

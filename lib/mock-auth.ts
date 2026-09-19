@@ -160,7 +160,8 @@ export async function register(name: string, email: string, password: string): P
   };
   accounts.push(account);
   persist();
-  persistSession(account.id);
+  // Creates the account only. No session is started: like the real API in
+  // Task 4, registering is not a login — the user signs in afterwards.
   return toUser(account);
 }
 

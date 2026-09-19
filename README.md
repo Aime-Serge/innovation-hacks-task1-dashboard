@@ -164,7 +164,8 @@ added once Task 2's API introduces a base URL to configure.
 
 A seeded account is always available on a fresh browser profile:
 `aime.serge@example.com` / `password123` (shown on the login page
-itself). Registering a new account works too — it's saved to
+itself). Registering a new account works too (registering does not sign you in — you
+are sent to the login page to log in with it) — it's saved to
 `localStorage`, so it survives reloads within the same browser.
 
 ## Project structure
