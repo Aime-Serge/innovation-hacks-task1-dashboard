@@ -80,7 +80,7 @@ describe("TC-010 navigation (FR-05..08)", () => {
     const footer = screen.getByRole("contentinfo", { name: "Site footer" });
     const repo = within(footer).getByRole("link", { name: "Source on GitHub" });
     expect(repo).toHaveAttribute("rel", "noopener noreferrer");
-    expect(within(footer).getByText(/mock data and a mock login/)).toBeInTheDocument();
+    expect(within(footer).getByText(/mock data and mock login/)).toBeInTheDocument();
   });
 
   it("TC-012 the shell has header, nav and one main landmark", () => {
