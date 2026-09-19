@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -23,6 +24,8 @@ type AuthValue = {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User) => void;
+  /** Stable and lazy: readers get the current user without re-rendering. */
+  getUserId: () => string | undefined;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -33,6 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const auth = useMemo(() => createMockAuth(), []);
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<SessionStatus>("loading");
+  const userRef = useRef<User | null>(null);
+  const getUserId = useCallback(() => userRef.current?.id, []);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -66,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [auth]);
 
   const value = useMemo(
-    () => ({ auth, user, status, login, logout, setUser }),
-    [auth, user, status, login, logout],
+    () => ({ auth, user, status, login, logout, setUser, getUserId }),
+    [auth, user, status, login, logout, getUserId],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

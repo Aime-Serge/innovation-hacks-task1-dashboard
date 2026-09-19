@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Script from "next/script";
-import { connection } from "next/server";
+import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { Suspense, type ReactNode } from "react";
 import { t } from "@/i18n";
 import "@/styles/globals.css";
+import { NonceBridge } from "@/providers/NonceBridge";
 import { Providers } from "@/providers";
+import { THEME_INIT_SCRIPT } from "@/providers/theme";
 
-const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
+// Self-hosted (TH-09) and committed, so the build needs no network. Inter is
+// licensed under the SIL OFL; the licence sits next to the file.
+const inter = localFont({
+  src: "./fonts/inter-latin-wght-normal.woff2",
+  variable: "--font-inter",
+  weight: "100 900",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "DevDash", template: "%s · DevDash" },
@@ -15,15 +23,17 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  // Opting into per-request rendering is what lets Next apply the CSP nonce to
-  // its own scripts (see docs/adr/ADR-006-csp-nonce.md).
-  await connection();
+  // Reading the request's nonce makes every route dynamic, which is what lets
+  // Next apply the nonce to its own scripts (docs/adr/ADR-011-csp-and-theme-script.md).
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" data-theme="light" className={inter.variable} suppressHydrationWarning>
       <head>
-        <Script src="/theme-init.js" strategy="beforeInteractive" />
+        {/* Blocks first paint on purpose: sets data-theme so there is no flash (FR-24). */}
+        <script nonce={nonce}>{THEME_INIT_SCRIPT}</script>
       </head>
       <body>
+        <NonceBridge nonce={nonce} />
         <Suspense fallback={<p className="sr-only">{t("common.loading")}</p>}>
           <Providers>{children}</Providers>
         </Suspense>

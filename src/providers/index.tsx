@@ -23,19 +23,31 @@ function QueryScope({ children }: { children: ReactNode }) {
     client = makeClient();
     clients.set(scenario, client);
   }
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  // The key remounts the tree: useQuery binds to the client it first saw, so a
+  // new scenario needs new observers, not just a new client.
+  return (
+    <QueryClientProvider key={scenario} client={client}>
+      {children}
+    </QueryClientProvider>
+  );
 }
 
+/** Theme and session: everything, including the sign-in pages, needs these. */
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <QueryScope>
-          <ServicesProvider>
-            <ToastProvider>{children}</ToastProvider>
-          </ServicesProvider>
-        </QueryScope>
-      </AuthProvider>
+      <AuthProvider>{children}</AuthProvider>
     </ThemeProvider>
+  );
+}
+
+/** Data layer: only the signed-in app needs the query cache, services and toasts. */
+export function AppProviders({ children }: { children: ReactNode }) {
+  return (
+    <QueryScope>
+      <ServicesProvider>
+        <ToastProvider>{children}</ToastProvider>
+      </ServicesProvider>
+    </QueryScope>
   );
 }

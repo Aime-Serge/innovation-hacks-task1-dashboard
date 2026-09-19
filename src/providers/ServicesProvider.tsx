@@ -11,11 +11,12 @@ const ServicesContext = createContext<Services | null>(null);
 /** The only place an adapter is imported (enforced by ESLint). */
 export function ServicesProvider({ children }: { children: ReactNode }) {
   const scenario = useScenario();
-  const { user } = useAuth();
-  const actorId = user?.id;
+  // The actor is read lazily: rebuilding the mock when the session resolves
+  // would reset its state (and the "flaky" scenario's first-request failure).
+  const { getUserId } = useAuth();
   const { services } = useMemo(
-    () => createMockServices({ scenario, ...(actorId === undefined ? {} : { actorId }) }),
-    [scenario, actorId],
+    () => createMockServices({ scenario, getActorId: getUserId }),
+    [scenario, getUserId],
   );
   return <ServicesContext.Provider value={services}>{children}</ServicesContext.Provider>;
 }

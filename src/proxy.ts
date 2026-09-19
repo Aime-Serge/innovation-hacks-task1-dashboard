@@ -10,7 +10,7 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
   return [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ""}`,
-    "style-src 'self'",
+    `style-src 'self' 'nonce-${nonce}'`,
     "img-src 'self' data:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
@@ -20,7 +20,7 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
 
 // mock_session is a plain unsigned cookie set by the mock auth adapter (Task 1
 // has no backend). This is a presence check to avoid flashing a protected page
-// before the client-side redirect; it is not an authorization control (ADR-004).
+// before the client-side redirect; it is not an authorization control (ADR-010).
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthEntry = AUTH_ENTRY_PATHS.includes(pathname);
@@ -46,5 +46,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // robots.txt must stay public so crawlers get the file, not the login page.
-  matcher: [{ source: "/((?!_next/static|_next/image|favicon.ico|robots.txt|theme-init.js).*)" }],
+  matcher: [{ source: "/((?!_next/static|_next/image|favicon.ico|robots.txt).*)" }],
 };
