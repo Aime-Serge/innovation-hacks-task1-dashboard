@@ -17,6 +17,8 @@ type RegionStateProps<T> = {
   empty: { icon?: IconName; title: string; body?: string; action?: ReactNode };
   onRetry: () => void;
   onClearFilters?: () => void;
+  /** h2 when the region sits directly under the page's h1, h3 inside a section. */
+  headingLevel?: "h1" | "h2" | "h3";
   children: (items: readonly T[]) => ReactNode;
 };
 
@@ -26,7 +28,18 @@ type RegionStateProps<T> = {
  * error with Retry.
  */
 export function RegionState<T>(props: RegionStateProps<T>) {
-  const { status, data, filtered, skeleton, empty, onRetry, onClearFilters, children } = props;
+  const {
+    status,
+    data,
+    filtered,
+    skeleton,
+    empty,
+    onRetry,
+    onClearFilters,
+    headingLevel,
+    children,
+  } = props;
+  const level = headingLevel === undefined ? {} : { headingLevel };
   if (status === "loading") {
     return (
       <div aria-busy="true" aria-live="polite">
@@ -35,12 +48,13 @@ export function RegionState<T>(props: RegionStateProps<T>) {
       </div>
     );
   }
-  if (status === "error" || data === undefined) return <ErrorState onRetry={onRetry} />;
+  if (status === "error" || data === undefined) return <ErrorState onRetry={onRetry} {...level} />;
   if (data.length === 0) {
     if (filtered) {
       return (
         <EmptyState
           icon="search"
+          {...level}
           title={t("state.noResults.title")}
           body={t("state.noResults.body")}
           action={
@@ -51,7 +65,7 @@ export function RegionState<T>(props: RegionStateProps<T>) {
         />
       );
     }
-    return <EmptyState {...empty} />;
+    return <EmptyState {...empty} {...level} />;
   }
   return <>{children(data)}</>;
 }

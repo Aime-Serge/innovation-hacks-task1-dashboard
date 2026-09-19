@@ -21,3 +21,14 @@ export function safeInternalPath(next: string | null | undefined): string {
 export function hardNavigate(path: string): void {
   window.location.assign(safeInternalPath(path));
 }
+
+/**
+ * Updates the URL without a navigation. Next.js integrates the History API with
+ * usePathname and useSearchParams, so filters stay shareable (FR-17) without a
+ * server round trip on every click, which is what keeps interactions under the
+ * 200 ms INP budget (NFR-03).
+ */
+export function replaceUrl(href: string): void {
+  // null, not the current state: Next treats its own state object as an internal call and skips the router update.
+  window.history.replaceState(null, "", href);
+}

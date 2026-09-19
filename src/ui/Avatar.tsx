@@ -1,4 +1,3 @@
-import { Avatar as RadixAvatar } from "radix-ui";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 
@@ -8,12 +7,12 @@ const SIZES = {
   lg: "size-16 text-xl",
 } as const;
 
-type AvatarProps = { name: string; src?: string | undefined; size?: keyof typeof SIZES };
+type AvatarProps = { name: string; size?: keyof typeof SIZES };
 
 /** Decorative: the person's name is always shown in text next to it. */
-export function Avatar({ name, src, size = "md" }: AvatarProps) {
+export function Avatar({ name, size = "md" }: AvatarProps) {
   return (
-    <RadixAvatar.Root
+    <span
       aria-hidden="true"
       className={cn(
         "inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full",
@@ -21,10 +20,7 @@ export function Avatar({ name, src, size = "md" }: AvatarProps) {
         SIZES[size],
       )}
     >
-      {src !== undefined && (
-        <RadixAvatar.Image src={src} alt="" className="size-full object-cover" />
-      )}
-      <RadixAvatar.Fallback>{initials(name)}</RadixAvatar.Fallback>
-    </RadixAvatar.Root>
+      {initials(name)}
+    </span>
   );
 }

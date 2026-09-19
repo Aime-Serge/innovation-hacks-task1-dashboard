@@ -1,38 +1,28 @@
-import type { ReactNode } from "react";
-import { DropdownMenu as RadixMenu } from "radix-ui";
-import { Icon } from "./Icon";
+import { cloneElement, lazy, Suspense, useState, type ReactElement } from "react";
+import type { DropdownMenuProps } from "./DropdownMenuImpl";
 
-export type MenuItem = { value: string; label: string; selected?: boolean };
+export type { MenuItem } from "./DropdownMenuImpl";
 
-type DropdownMenuProps = {
-  trigger: ReactNode;
-  items: readonly MenuItem[];
-  onSelect: (value: string) => void;
-};
+// Radix menus pull in Popper (positioning) and roving focus, ~25 KB gzip. Until
+// the first click the trigger is a plain button; that click loads the menu and
+// opens it (NFR-04).
+const DropdownMenuImpl = lazy(() => import("./DropdownMenuImpl"));
 
-/** Arrow-key navigation, typeahead and Escape come from Radix. */
-export function DropdownMenu({ trigger, items, onSelect }: DropdownMenuProps) {
+type TriggerProps = { onClick?: () => void; onKeyDown?: (event: { key: string }) => void };
+
+export function DropdownMenu(props: DropdownMenuProps & { trigger: ReactElement<TriggerProps> }) {
+  const [armed, setArmed] = useState(false);
+  if (!armed) {
+    return cloneElement(props.trigger, {
+      onClick: () => setArmed(true),
+      onKeyDown: (event) => {
+        if (event.key === "ArrowDown") setArmed(true);
+      },
+    });
+  }
   return (
-    <RadixMenu.Root>
-      <RadixMenu.Trigger asChild>{trigger}</RadixMenu.Trigger>
-      <RadixMenu.Portal>
-        <RadixMenu.Content
-          align="end"
-          sideOffset={4}
-          className="z-50 min-w-40 rounded-md border border-line bg-surface p-1 shadow-md"
-        >
-          {items.map((item) => (
-            <RadixMenu.Item
-              key={item.value}
-              onSelect={() => onSelect(item.value)}
-              className="touch-target flex cursor-pointer items-center justify-between gap-3 rounded-sm px-3 py-2 text-sm outline-none data-[highlighted]:bg-subtle"
-            >
-              {item.label}
-              {item.selected === true && <Icon name="check" className="size-4 text-accent" />}
-            </RadixMenu.Item>
-          ))}
-        </RadixMenu.Content>
-      </RadixMenu.Portal>
-    </RadixMenu.Root>
+    <Suspense fallback={props.trigger}>
+      <DropdownMenuImpl {...props} defaultOpen />
+    </Suspense>
   );
 }
