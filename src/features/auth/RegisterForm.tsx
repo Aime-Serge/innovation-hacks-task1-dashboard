@@ -1,27 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type SyntheticEvent } from "react";
-import { useAuth } from "@/providers/AuthProvider";
+import { useState, type SyntheticEvent } from "react";
 import { t } from "@/i18n";
-import { AVATAR_ACCEPT, avatarFileProblem, isHttpsImageUrl } from "@/lib/avatar";
+import { AVATAR_ACCEPT, isHttpsImageUrl } from "@/lib/avatar";
 import { formText } from "@/lib/form";
-import { hardNavigate } from "@/lib/navigation";
 import type { AvatarInput } from "@/services/auth";
-import { ServiceError } from "@/services/types";
 import { Avatar } from "@/ui/Avatar";
 import { Button } from "@/ui/Button";
 import { FormField } from "@/ui/FormField";
 import { Input } from "@/ui/Input";
 import { FormAlert } from "./messages";
+import { RegisterRoleDialog } from "./RegisterRoleDialog";
 import { RegistrationProfileFields } from "./RegistrationProfileFields";
 import { registrationProfile } from "./registration-profile";
+import { useAvatarField } from "./useAvatarField";
+import { useRegisterFlow } from "./useRegisterFlow";
 
 const MIN_PASSWORD = 8;
 
 /** Creating an account never signs anyone in: it sends them to the login page. */
 export function RegisterForm() {
-  const { auth } = useAuth();
   const [errors, setErrors] = useState<{
     email?: string | undefined;
     password?: string | undefined;
@@ -29,60 +28,24 @@ export function RegisterForm() {
     profile?: string | undefined;
     form?: string | undefined;
   }>({});
-  const [busy, setBusy] = useState(false);
-  const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarUrlText, setAvatarUrlText] = useState("");
+  const { busy, roleDialogOpen, setRoleDialogOpen, open, confirm } = useRegisterFlow(setErrors);
+  const setAvatarError = (updater: (avatar: string | undefined) => string | undefined) =>
+    setErrors((e) => ({ ...e, avatar: updater(e.avatar) }));
+  const {
+    avatarFile,
+    avatarUrlText,
+    previewUrl,
+    fileInputRef,
+    chooseFile,
+    changeUrl,
+    removePhoto,
+  } = useAvatarField(setAvatarError);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Derived from avatarFile, not its own state: the object URL only exists to preview a chosen
-  // file, so it is computed during render and released once it is replaced or unmounted.
-  const objectUrl = useMemo(
-    () => (avatarFile !== null ? URL.createObjectURL(avatarFile) : null),
-    [avatarFile],
-  );
-  useEffect(() => {
-    return () => {
-      if (objectUrl !== null) URL.revokeObjectURL(objectUrl);
-    };
-  }, [objectUrl]);
-
-  const previewUrl = avatarFile !== null ? objectUrl : avatarUrlText.trim() || null;
-
-  const chooseFile = (file: File | undefined) => {
-    if (file === undefined) return;
-    const problem = avatarFileProblem(file);
-    if (problem !== null) {
-      setErrors((e) => ({
-        ...e,
-        avatar: t(problem === "type" ? "auth.avatarInvalidType" : "auth.avatarTooLarge"),
-      }));
-      if (fileInputRef.current !== null) fileInputRef.current.value = "";
-      return;
-    }
-    setErrors((e) => ({ ...e, avatar: undefined }));
-    setAvatarUrlText("");
-    setAvatarFile(file);
-  };
-
-  const changeUrl = (value: string) => {
-    setAvatarUrlText(value);
-    setErrors((e) => ({ ...e, avatar: undefined }));
-    if (value.trim() !== "") {
-      setAvatarFile(null);
-      if (fileInputRef.current !== null) fileInputRef.current.value = "";
-    }
-  };
-
-  const removePhoto = () => {
-    setAvatarFile(null);
-    setAvatarUrlText("");
-    setErrors((e) => ({ ...e, avatar: undefined }));
-    if (fileInputRef.current !== null) fileInputRef.current.value = "";
-  };
-
-  const submit = async (event: SyntheticEvent<HTMLFormElement>) => {
+  // Validates the whole form, then opens RegisterRoleDialog instead of submitting directly;
+  // the dialog's onConfirm runs the actual auth.register call (useRegisterFlow.confirm).
+  const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const text = (key: string) => formText(form, key);
@@ -113,24 +76,17 @@ export function RegisterForm() {
         : url !== ""
           ? { kind: "url", url }
           : undefined;
-    setBusy(true);
-    setErrors({});
-    try {
-      const name = text("name").trim();
-      const email = text("email").trim();
-      const password = text("password");
-      if (avatar === undefined) await auth.register(name, email, password, undefined, profile);
-      else await auth.register(name, email, password, avatar, profile);
-      hardNavigate("/login?registered=1");
-    } catch (failure) {
-      const conflict = failure instanceof ServiceError && failure.status === 409;
-      setErrors(conflict ? { email: t("auth.emailTaken") } : { form: t("auth.genericError") });
-      setBusy(false);
-    }
+    open({
+      name: text("name").trim(),
+      email: text("email").trim(),
+      password: text("password"),
+      avatar,
+      profile,
+    });
   };
 
   return (
-    <form onSubmit={(event) => void submit(event)} noValidate className="flex flex-col gap-4">
+    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
       {errors.form !== undefined && <FormAlert>{errors.form}</FormAlert>}
       <FormField id="reg-name" label={t("auth.name")}>
         {(c) => <Input {...c} name="name" autoComplete="name" required maxLength={80} />}
@@ -199,6 +155,12 @@ export function RegisterForm() {
           {t("auth.login")}
         </Link>
       </p>
+      <RegisterRoleDialog
+        open={roleDialogOpen}
+        onOpenChange={setRoleDialogOpen}
+        busy={busy}
+        onConfirm={(role) => void confirm(role)}
+      />
     </form>
   );
 }

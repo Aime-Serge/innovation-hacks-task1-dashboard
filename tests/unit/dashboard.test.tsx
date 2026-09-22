@@ -5,6 +5,7 @@ import { DashboardView } from "@/features/dashboard/DashboardView";
 import { ActivityFeed } from "@/features/dashboard/ActivityFeed";
 import { DeadlineList } from "@/features/dashboard/DeadlineList";
 import { ProfileView } from "@/features/profile/ProfileView";
+import { authState, testUser } from "./mock-auth";
 import { installScenario } from "./mock-services";
 import { renderApp } from "./render";
 import { makeProject, makeTask } from "./helpers";
@@ -22,7 +23,10 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2030-01-10T12:00:00Z"));
 });
 
-afterEach(() => vi.useRealTimers());
+afterEach(() => {
+  vi.useRealTimers();
+  authState.user = testUser;
+});
 
 const open = (scenario: Scenario) => {
   installScenario(scenario);
@@ -32,7 +36,7 @@ const open = (scenario: Scenario) => {
 describe("TC-001 dashboard content (FR-01..04)", () => {
   it("TC-001 shows the h1, four KPIs, deadlines and activity", async () => {
     open("default");
-    expect(screen.getByRole("heading", { level: 1, name: "Dashboard" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "My dashboard" })).toBeInTheDocument();
     const kpis = await screen.findByText("Active projects");
     const region = kpis.closest("section") as HTMLElement;
     for (const label of ["Active projects", "Open tasks", "Overdue tasks", "Completion rate"]) {
@@ -81,6 +85,26 @@ describe("TC-001 dashboard content (FR-01..04)", () => {
     const retry = (await screen.findAllByRole("button", { name: "Retry" }))[0];
     await userEvent.click(retry as HTMLElement);
     await waitFor(() => expect(screen.getAllByRole("alert").length).toBeLessThan(3));
+  });
+});
+
+describe("TC-090 role dashboards", () => {
+  it("TC-090 a developer sees the developer dashboard, no team panel", async () => {
+    open("default");
+    expect(screen.getByRole("heading", { level: 1, name: "My dashboard" })).toBeInTheDocument();
+    await screen.findByText("Open tasks");
+    expect(screen.queryByRole("heading", { name: "Team" })).not.toBeInTheDocument();
+  });
+
+  it("TC-090 a team lead sees the team dashboard, team KPIs and the team panel", async () => {
+    authState.user = { ...testUser, role: "lead" };
+    open("default");
+    expect(screen.getByRole("heading", { level: 1, name: "Team dashboard" })).toBeInTheDocument();
+    expect(await screen.findByText("Team open tasks")).toBeInTheDocument();
+    expect(screen.getByText("Team overdue tasks")).toBeInTheDocument();
+    expect(screen.getByText("Team completion rate")).toBeInTheDocument();
+    expect(screen.getByText("Active projects")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Team" })).toBeInTheDocument();
   });
 });
 

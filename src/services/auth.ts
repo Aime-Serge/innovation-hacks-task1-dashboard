@@ -1,4 +1,4 @@
-import type { User } from "@/schemas";
+import type { Role, User } from "@/schemas";
 
 /** A photo to upload, or a link to an image already hosted elsewhere. */
 export type AvatarInput = { kind: "file"; file: File } | { kind: "url"; url: string };
@@ -22,13 +22,15 @@ export interface AuthService {
   getSession(): Promise<User | null>;
   login(email: string, password: string): Promise<User>;
   /** Creates the account only: registering never starts a session. `avatar` is optional;
-   * the initials avatar is used when it is omitted. */
+   * the initials avatar is used when it is omitted. `role` defaults to "developer" when
+   * omitted (the registration wizard always asks, but seeded/legacy callers may not). */
   register(
     name: string,
     email: string,
     password: string,
     avatar?: AvatarInput,
     profile?: RegistrationProfile,
+    role?: Role,
   ): Promise<User>;
   logout(): Promise<void>;
   forgotPassword(email: string): Promise<{ devResetUrl: string | null }>;
