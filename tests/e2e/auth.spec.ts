@@ -81,9 +81,9 @@ test.describe("TC-001 landing and authentication", () => {
     // The header shows the photo, not initials, and it actually decoded (no broken image).
     const headerAvatar = page.locator("header img");
     await expect(headerAvatar).toBeVisible();
-    expect(await headerAvatar.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(
-      0,
-    );
+    expect(
+      await headerAvatar.evaluate((img: HTMLImageElement) => img.naturalWidth),
+    ).toBeGreaterThan(0);
     await page.goto("/profile");
     await expect(page.locator("main img")).toBeVisible();
   });
