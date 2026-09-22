@@ -55,8 +55,15 @@ export function DashboardView() {
     void projects.refetch();
   };
 
+  const firstName = user?.name.split(" ")[0] ?? user?.name ?? "";
+
   return (
     <>
+      {user !== null && (
+        <p className="mb-1 text-sm font-medium text-muted">
+          {t("dashboard.greeting", { name: firstName })}
+        </p>
+      )}
       <PageHeader
         title={t(isLead ? "dashboard.title.lead" : "dashboard.title")}
         description={t("dashboard.description")}
