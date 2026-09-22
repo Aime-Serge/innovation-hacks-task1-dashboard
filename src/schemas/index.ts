@@ -4,6 +4,7 @@ import {
   enum as zenum,
   int,
   iso,
+  literal,
   maxLength,
   minLength,
   nonnegative,
@@ -61,6 +62,22 @@ export const User = object({
   email: email(),
   role: Role,
   avatarUrl: optional(string()),
+  // A Task 1 mock account can now retain the same core professional registration data as the
+  // later APIs. Existing seeded accounts legitimately have no profile yet.
+  profile: optional(
+    object({
+      discipline: string().check(minLength(1), maxLength(32)),
+      seniority: string().check(minLength(1), maxLength(32)),
+      employmentStatus: string().check(minLength(1), maxLength(32)),
+      companyName: optional(string().check(minLength(1), maxLength(120))),
+      jobTitle: optional(string().check(minLength(1), maxLength(100))),
+      country: string().check(minLength(2), maxLength(2)),
+      city: optional(string().check(minLength(1), maxLength(80))),
+      timeZone: string().check(minLength(1), maxLength(64)),
+      termsAccepted: literal(true),
+      ageConfirmed: literal(true),
+    }),
+  ),
   preferences: object({ theme: Theme }),
 });
 export type User = Infer<typeof User>;

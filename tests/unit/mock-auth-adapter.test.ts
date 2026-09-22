@@ -81,6 +81,28 @@ describe("TC-004 mock auth adapter", () => {
     expect(user.avatarUrl).toBe("https://example.com/grace.png");
   });
 
+  it("TC-005 retains the professional registration details used by Tasks 2 to 4", async () => {
+    const auth = await fresh();
+    const user = await run(
+      auth.register("Grace Hopper", "grace-profile@example.com", "password123", undefined, {
+        discipline: "backend",
+        seniority: "senior",
+        employmentStatus: "employed",
+        companyName: "Acme",
+        jobTitle: "Engineer",
+        country: "RW",
+        timeZone: "Africa/Kigali",
+        termsAccepted: true,
+        ageConfirmed: true,
+      }),
+    );
+    expect(user.profile).toMatchObject({
+      discipline: "backend",
+      companyName: "Acme",
+      country: "RW",
+    });
+  });
+
   it("TC-005 an invalid photo or link is refused, and no account is created", async () => {
     const auth = await fresh();
     const gif = new File(["x"], "a.gif", { type: "image/gif" });
