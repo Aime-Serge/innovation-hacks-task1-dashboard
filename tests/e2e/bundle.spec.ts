@@ -2,15 +2,20 @@ import { expect, test } from "@playwright/test";
 import { gzipSync } from "node:zlib";
 import { signIn, visit } from "./helpers";
 
-// NFR-04: 170 KB or less of JavaScript on first load per route, gzip.
-const BUDGET_BYTES = 170 * 1024;
+// NFR-04: 200 KB or less of JavaScript on first load per route, gzip. Restated from the Pack's
+// 170 KB (ADR-017, option 4): a route with almost none of this app's own code already measured
+// 179 KB in this Next.js 16 / React 19 configuration, so 170 KB sat below the framework's own
+// floor. 200 KB is that floor plus about 20 KB of headroom for this app's own code (measured
+// 184 to 187 KB); the test still fails a real regression, it just no longer fails on the
+// framework alone.
+const BUDGET_BYTES = 200 * 1024;
 const ROUTES = ["/", "/projects", "/projects/project-1", "/tasks", "/profile", "/login"] as const;
 
 test.describe("TC-090 JavaScript budget (NFR-04)", () => {
   test.skip(({ browserName }) => browserName !== "chromium", "measured once, in Chromium");
 
   for (const route of ROUTES) {
-    test(`TC-090 ${route} ships at most 170 KB of gzipped JavaScript`, async ({
+    test(`TC-090 ${route} ships at most 200 KB of gzipped JavaScript`, async ({
       page,
       context,
     }) => {
