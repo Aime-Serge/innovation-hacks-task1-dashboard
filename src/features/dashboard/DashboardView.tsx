@@ -5,6 +5,7 @@ import { Grid } from "@/layout/Grid";
 import { PageHeader } from "@/layout/PageHeader";
 import { t } from "@/i18n";
 import { addDays, todayIso } from "@/lib/dates";
+import { useAuth } from "@/providers/AuthProvider";
 import { emptyProjectQuery } from "@/schemas";
 import { Skeleton } from "@/ui/Skeleton";
 import { RegionState, type RegionStatus } from "@/ui/RegionState";
@@ -14,6 +15,8 @@ import { ActivityFeed } from "./ActivityFeed";
 import { DeadlineList } from "./DeadlineList";
 import { KpiTile } from "./KpiTile";
 import { computeKpis, upcomingDeadlines } from "./kpis";
+import { teamStats } from "./teamStats";
+import { TeamPanel } from "./TeamPanel";
 
 const statusOf = (...queries: { isPending: boolean; isError: boolean }[]): RegionStatus =>
   queries.some((q) => q.isError)
@@ -24,6 +27,8 @@ const statusOf = (...queries: { isPending: boolean; isError: boolean }[]): Regio
 
 /** FR-01..04: three independent regions, so one failure never blanks the page (NFR-19). */
 export function DashboardView() {
+  const { user } = useAuth();
+  const isLead = user?.role === "lead";
   const tasks = useAllTasks();
   const projects = useProjects(emptyProjectQuery());
   const users = useUsers();
@@ -39,6 +44,11 @@ export function DashboardView() {
     () => upcomingDeadlines(tasks.data?.items ?? [], today, addDays(today, 7)),
     [tasks.data, today],
   );
+  // Fed entirely from the tasks/users queries above: no extra fetch for either role.
+  const team = useMemo(
+    () => (isLead ? teamStats(tasks.data?.items ?? [], users.data ?? [], today) : []),
+    [isLead, tasks.data, users.data, today],
+  );
 
   const retryKpis = () => {
     void tasks.refetch();
@@ -47,7 +57,10 @@ export function DashboardView() {
 
   return (
     <>
-      <PageHeader title={t("dashboard.title")} description={t("dashboard.description")} />
+      <PageHeader
+        title={t(isLead ? "dashboard.title.lead" : "dashboard.title")}
+        description={t("dashboard.description")}
+      />
       <section aria-labelledby="kpi-heading" className="mb-6">
         <h2 id="kpi-heading" className="sr-only">
           {t("dashboard.kpis")}
@@ -74,15 +87,19 @@ export function DashboardView() {
                   label={t("kpi.activeProjects")}
                   value={String(value.activeProjects)}
                 />
-                <KpiTile icon="tasks" label={t("kpi.openTasks")} value={String(value.openTasks)} />
+                <KpiTile
+                  icon="tasks"
+                  label={t(isLead ? "kpi.openTasks.lead" : "kpi.openTasks")}
+                  value={String(value.openTasks)}
+                />
                 <KpiTile
                   icon="alert"
-                  label={t("kpi.overdueTasks")}
+                  label={t(isLead ? "kpi.overdueTasks.lead" : "kpi.overdueTasks")}
                   value={String(value.overdueTasks)}
                 />
                 <KpiTile
                   icon="checkCircle"
-                  label={t("kpi.completionRate")}
+                  label={t(isLead ? "kpi.completionRate.lead" : "kpi.completionRate")}
                   value={`${value.completionRate}%`}
                 />
               </Grid>
@@ -130,6 +147,11 @@ export function DashboardView() {
           </RegionState>
         </section>
       </Grid>
+      {isLead && tasks.data !== undefined && users.data !== undefined && (
+        <div className="mt-6">
+          <TeamPanel stats={team} />
+        </div>
+      )}
     </>
   );
 }

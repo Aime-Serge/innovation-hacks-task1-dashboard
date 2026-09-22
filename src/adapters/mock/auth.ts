@@ -1,5 +1,5 @@
 import { avatarFileProblem, isHttpsImageUrl } from "@/lib/avatar";
-import type { User } from "@/schemas";
+import type { Role, User } from "@/schemas";
 import type { AuthService, AvatarInput, RegistrationProfile } from "@/services/auth";
 import { ServiceError } from "@/services/types";
 import { findByEmail, findById, getAccounts, saveAccounts } from "./accounts";
@@ -80,7 +80,7 @@ export function createMockAuth(): AuthService {
       persistSession(found.user.id);
       return found.user;
     },
-    async register(name, email, password, avatar, profile?: RegistrationProfile) {
+    async register(name, email, password, avatar, profile?: RegistrationProfile, role?: Role) {
       // Validate the photo before creating anything: a rejected image should never leave a
       // half-registered account behind.
       const avatarUrl = avatar === undefined ? undefined : await resolveAvatar(avatar);
@@ -92,7 +92,7 @@ export function createMockAuth(): AuthService {
         id: `user-${token().slice(0, 7)}`,
         name,
         email,
-        role: "developer",
+        role: role ?? "developer",
         preferences: { theme: "dark" },
         ...(avatarUrl === undefined ? {} : { avatarUrl }),
         ...(profile === undefined ? {} : { profile }),

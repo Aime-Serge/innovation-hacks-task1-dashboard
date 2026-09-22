@@ -46,6 +46,13 @@ async function fillRegistrationProfile(): Promise<void> {
   );
 }
 
+/** Picks a role in the post-wizard dialog and confirms, completing the submit. */
+async function confirmRoleDialog(role: "Developer" | "Team Lead" = "Developer"): Promise<void> {
+  const dialog = await screen.findByRole("dialog");
+  await userEvent.click(within(dialog).getByRole("radio", { name: role }));
+  await userEvent.click(within(dialog).getByRole("button", { name: "Create account" }));
+}
+
 beforeEach(() => {
   authState.user = testUser;
   hardNavigate.mockReset();
@@ -251,6 +258,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
     await fillRegistrationProfile();
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await confirmRoleDialog();
     await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
     expect(auth.register).toHaveBeenCalledWith(
       "Ada",
@@ -258,8 +266,24 @@ describe("TC-005 auth forms (register redirects to login)", () => {
       "password123",
       undefined,
       expect.objectContaining({ discipline: "backend", country: "RW" }),
+      "developer",
     );
     expect(authState.login).not.toHaveBeenCalled();
+  });
+
+  it("TC-005 the role dialog blocks account creation until a role is chosen", async () => {
+    render(<RegisterForm />);
+    await userEvent.type(screen.getByLabelText("Name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    await fillRegistrationProfile();
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByRole("button", { name: "Create account" })).toBeDisabled();
+    expect(auth.register).not.toHaveBeenCalled();
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Team Lead" }));
+    expect(within(dialog).getByRole("button", { name: "Create account" })).toBeEnabled();
   });
 
   it("TC-005 short and mismatched passwords are rejected before any request", async () => {
@@ -290,6 +314,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     await userEvent.upload(screen.getByLabelText("Upload a photo"), file);
     await fillRegistrationProfile();
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await confirmRoleDialog();
     await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
     expect(auth.register).toHaveBeenCalledWith(
       "Ada",
@@ -297,6 +322,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
       "password123",
       { kind: "file", file },
       expect.objectContaining({ discipline: "backend" }),
+      "developer",
     );
   });
 
@@ -317,6 +343,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     await fillRegistrationProfile();
 
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await confirmRoleDialog();
     await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
     expect(auth.register).toHaveBeenCalledWith(
       "Ada",
@@ -324,6 +351,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
       "password123",
       { kind: "file", file },
       expect.objectContaining({ discipline: "backend" }),
+      "developer",
     );
   });
 
@@ -366,6 +394,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Remove photo" }));
     await fillRegistrationProfile();
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await confirmRoleDialog();
     await waitFor(() =>
       expect(auth.register).toHaveBeenCalledWith(
         "Ada",
@@ -373,6 +402,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
         "password123",
         undefined,
         expect.objectContaining({ discipline: "backend" }),
+        "developer",
       ),
     );
   });
@@ -387,11 +417,15 @@ describe("TC-005 auth forms (register redirects to login)", () => {
       await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
       await fillRegistrationProfile();
       await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+      await confirmRoleDialog();
     };
     await fill();
     expect(await screen.findByText(/already exists/)).toBeInTheDocument();
+    // The dialog closes on failure so the error is visible on the form, not hidden behind it.
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     auth.register.mockRejectedValueOnce(new Error("boom"));
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await confirmRoleDialog();
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Something went wrong. Please try again.",
     );
