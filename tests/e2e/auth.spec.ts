@@ -1,5 +1,16 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { signIn } from "./helpers";
+
+async function completeProfessionalRegistration(page: Page) {
+  await page.getByLabel("Discipline").selectOption("backend");
+  await page.getByLabel("Seniority").selectOption("senior");
+  await page.getByLabel("Employment status").selectOption("employed");
+  await page.getByLabel("Company name").fill("Acme");
+  await page.getByLabel("Job title").fill("Engineer");
+  await page.getByLabel("Country").fill("RW");
+  await page.getByLabel("I accept the Terms of Service.").check();
+  await page.getByLabel("I confirm that I meet the minimum age requirement.").check();
+}
 
 test.describe("TC-001 landing and authentication", () => {
   test("TC-001 an anonymous visitor is sent to login and back to the page they wanted", async ({
@@ -38,6 +49,7 @@ test.describe("TC-001 landing and authentication", () => {
     await page.getByLabel("Email").fill(email);
     await page.getByLabel("Password", { exact: true }).fill("password123");
     await page.getByLabel("Confirm password").fill("password123");
+    await completeProfessionalRegistration(page);
     await page.getByRole("button", { name: "Create account" }).click();
     await expect(page).toHaveURL(/\/login\?registered=1/, { timeout: 30_000 });
     await expect(page.getByText("Account created. Log in to continue.")).toBeVisible();
@@ -70,6 +82,7 @@ test.describe("TC-001 landing and authentication", () => {
       .setInputFiles({ name: "avatar.png", mimeType: "image/png", buffer: png });
     // The live preview proves the file was accepted before submitting.
     await expect(page.locator("form img")).toBeVisible();
+    await completeProfessionalRegistration(page);
     await page.getByRole("button", { name: "Create account" }).click();
     await expect(page).toHaveURL(/\/login\?registered=1/, { timeout: 30_000 });
     await page.getByLabel("Email").fill(email);

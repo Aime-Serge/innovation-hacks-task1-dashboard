@@ -14,6 +14,8 @@ import { Button } from "@/ui/Button";
 import { FormField } from "@/ui/FormField";
 import { Input } from "@/ui/Input";
 import { FormAlert } from "./messages";
+import { RegistrationProfileFields } from "./RegistrationProfileFields";
+import { registrationProfile } from "./registration-profile";
 
 const MIN_PASSWORD = 8;
 
@@ -24,11 +26,14 @@ export function RegisterForm() {
     email?: string | undefined;
     password?: string | undefined;
     avatar?: string | undefined;
+    profile?: string | undefined;
     form?: string | undefined;
   }>({});
   const [busy, setBusy] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarUrlText, setAvatarUrlText] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Derived from avatarFile, not its own state: the object URL only exists to preview a chosen
@@ -97,6 +102,11 @@ export function RegisterForm() {
       setErrors({ avatar: t("auth.avatarInvalidUrl") });
       return;
     }
+    const profile = registrationProfile(form, termsAccepted, ageConfirmed);
+    if (profile === null) {
+      setErrors({ profile: t("auth.profileRequired") });
+      return;
+    }
     const avatar: AvatarInput | undefined =
       avatarFile !== null
         ? { kind: "file", file: avatarFile }
@@ -109,8 +119,8 @@ export function RegisterForm() {
       const name = text("name").trim();
       const email = text("email").trim();
       const password = text("password");
-      if (avatar === undefined) await auth.register(name, email, password);
-      else await auth.register(name, email, password, avatar);
+      if (avatar === undefined) await auth.register(name, email, password, undefined, profile);
+      else await auth.register(name, email, password, avatar, profile);
       hardNavigate("/login?registered=1");
     } catch (failure) {
       const conflict = failure instanceof ServiceError && failure.status === 409;
@@ -173,6 +183,13 @@ export function RegisterForm() {
           </Button>
         )}
       </div>
+      {errors.profile !== undefined && <FormAlert>{errors.profile}</FormAlert>}
+      <RegistrationProfileFields
+        termsAccepted={termsAccepted}
+        ageConfirmed={ageConfirmed}
+        onTermsAccepted={setTermsAccepted}
+        onAgeConfirmed={setAgeConfirmed}
+      />
       <Button type="submit" variant="primary" disabled={busy}>
         {busy ? t("auth.creating") : t("auth.createAccount")}
       </Button>

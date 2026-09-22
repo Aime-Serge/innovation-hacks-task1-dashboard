@@ -33,6 +33,19 @@ vi.mock("@/lib/navigation", async (original) => ({
   hardNavigate,
 }));
 
+async function fillRegistrationProfile(): Promise<void> {
+  await userEvent.selectOptions(screen.getByLabelText("Discipline"), "backend");
+  await userEvent.selectOptions(screen.getByLabelText("Seniority"), "senior");
+  await userEvent.selectOptions(screen.getByLabelText("Employment status"), "employed");
+  await userEvent.type(screen.getByLabelText("Company name"), "Acme");
+  await userEvent.type(screen.getByLabelText("Job title"), "Engineer");
+  await userEvent.type(screen.getByLabelText("Country"), "RW");
+  await userEvent.click(screen.getByLabelText("I accept the Terms of Service."));
+  await userEvent.click(
+    screen.getByLabelText("I confirm that I meet the minimum age requirement."),
+  );
+}
+
 beforeEach(() => {
   authState.user = testUser;
   hardNavigate.mockReset();
@@ -236,9 +249,16 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
     await userEvent.type(screen.getByLabelText("Password"), "password123");
     await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    await fillRegistrationProfile();
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
-    expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123");
+    expect(auth.register).toHaveBeenCalledWith(
+      "Ada",
+      "ada@example.com",
+      "password123",
+      undefined,
+      expect.objectContaining({ discipline: "backend", country: "RW" }),
+    );
     expect(authState.login).not.toHaveBeenCalled();
   });
 
@@ -268,12 +288,16 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
     const file = new File(["x"], "ada.png", { type: "image/png" });
     await userEvent.upload(screen.getByLabelText("Upload a photo"), file);
+    await fillRegistrationProfile();
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
-    expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123", {
-      kind: "file",
-      file,
-    });
+    expect(auth.register).toHaveBeenCalledWith(
+      "Ada",
+      "ada@example.com",
+      "password123",
+      { kind: "file", file },
+      expect.objectContaining({ discipline: "backend" }),
+    );
   });
 
   it("TC-005 an image link is sent when no file was chosen, and picking a file replaces it", async () => {
@@ -290,13 +314,17 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     const file = new File(["x"], "ada.png", { type: "image/png" });
     await userEvent.upload(screen.getByLabelText("Upload a photo"), file);
     expect(urlField).toHaveValue("");
+    await fillRegistrationProfile();
 
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
-    expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123", {
-      kind: "file",
-      file,
-    });
+    expect(auth.register).toHaveBeenCalledWith(
+      "Ada",
+      "ada@example.com",
+      "password123",
+      { kind: "file", file },
+      expect.objectContaining({ discipline: "backend" }),
+    );
   });
 
   it("TC-005 a non-https link is rejected without a request, an http link included", async () => {
@@ -336,9 +364,16 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     expect(auth.register).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    await fillRegistrationProfile();
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     await waitFor(() =>
-      expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123"),
+      expect(auth.register).toHaveBeenCalledWith(
+        "Ada",
+        "ada@example.com",
+        "password123",
+        undefined,
+        expect.objectContaining({ discipline: "backend" }),
+      ),
     );
   });
 
@@ -350,6 +385,7 @@ describe("TC-005 auth forms (register redirects to login)", () => {
       await userEvent.type(screen.getByLabelText("Email"), "a@b.co");
       await userEvent.type(screen.getByLabelText("Password"), "password123");
       await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+      await fillRegistrationProfile();
       await userEvent.click(screen.getByRole("button", { name: "Create account" }));
     };
     await fill();
