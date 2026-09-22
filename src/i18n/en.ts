@@ -1,6 +1,7 @@
 // Single dictionary for every user-facing string (NFR-21).
 export const en = {
   "app.name": "DevDash",
+  "auth.welcomeGreeting": "Welcome, Developer or Team Lead",
 
   "common.retry": "Retry",
   "common.cancel": "Cancel",
@@ -84,6 +85,7 @@ export const en = {
   "filter.priority": "Priority",
   "filter.project": "Project",
 
+  "dashboard.greeting": "Welcome back, {name}.",
   "dashboard.title": "My dashboard",
   "dashboard.title.lead": "Team dashboard",
   "dashboard.description": "Where every project stands, at a glance.",
