@@ -18,4 +18,4 @@ interpretation, or deviates from the Pack, so a reviewer can find the reason.
 | [ADR-014](ADR-014-repository-layout.md) | The project lives at the repository root, not in `frontend/` | Accepted, deviation |
 | [ADR-015](ADR-015-lint-tuning.md) | One typescript-eslint rule is tuned | Accepted |
 | [ADR-016](ADR-016-webkit-and-lighthouse.md) | WebKit runs in CI only; Lighthouse runs against the mock session | Accepted, limitation |
-| [ADR-017](ADR-017-first-load-javascript.md) | The 170 KB first-load JavaScript budget is not met | Open, not met |
+| [ADR-017](ADR-017-first-load-javascript.md) | The first-load JavaScript budget is restated to 200 KB | Resolved |
