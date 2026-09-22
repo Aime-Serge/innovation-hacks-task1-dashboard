@@ -74,6 +74,7 @@ TC-093 (dependency audit) is `npm run audit`.
 
 | Item | Status | Evidence |
 | --- | --- | --- |
-| Lighthouse scores of 90 or more | **Not done**: performance 78 to 86; accessibility, best practices and SEO 100 | ADR-017 |
-| Tag `task-1-submission` | **Not created** (the gate is red) | |
+| Lighthouse scores of 90 or more | Done: performance 93 to 99 on a quiet machine; sensitive to load (78 to 86 on a loaded one, same code); accessibility, best practices and SEO 100 | ADR-017 |
+| Tag `task-1-submission` | Created and pushed: the gate is green | |
+| Profile photo on registration, upload or link | Done: shown instead of initials wherever the avatar appears | ADR-018, `tests/e2e/auth.spec.ts` |
 | Demo video, LinkedIn post | Not done: need a person | `DEMO_SCRIPT.md`, `docs/linkedin-post.md` |

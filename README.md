@@ -53,7 +53,7 @@ For the production build that the tests use: `npm run build && npm start`.
 | `/projects/[id]` | Progress ring, that project's tasks, edit, add a task, not-found state |
 | `/tasks` | Search (250 ms debounce), filters, sort, all in the URL; change a status from its card |
 | `/profile` | Your task statistics, edit your name, choose a theme |
-| `/login`, `/register`, `/forgot-password`, `/reset-password` | Mock authentication. Registering sends you to login, it never signs you in |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Mock authentication. Registering sends you to login, it never signs you in. Registering can also add a profile photo — upload a file or paste an image link — shown instead of initials everywhere the avatar appears (ADR-018) |
 
 ### Every state is reachable
 
