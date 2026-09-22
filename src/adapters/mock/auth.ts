@@ -1,13 +1,12 @@
+import { avatarFileProblem, isHttpsImageUrl } from "@/lib/avatar";
 import type { User } from "@/schemas";
-import type { AuthService } from "@/services/auth";
+import type { AuthService, AvatarInput } from "@/services/auth";
 import { ServiceError } from "@/services/types";
 import { findByEmail, findById, getAccounts, saveAccounts } from "./accounts";
 
 const SESSION_COOKIE = "mock_session";
 const SESSION_KEY = "devdash_session_user_id";
 const RESET_TTL_MS = 30 * 60 * 1000;
-const AVATAR_MAX_BYTES = 500_000;
-const AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 const fail = (message: string, status = 400, code = "bad_request") =>
@@ -48,6 +47,18 @@ function readFile(file: File): Promise<string> {
   });
 }
 
+/** Shared by registration and the later "change photo" flow, so the rules never drift apart. */
+async function resolveAvatar(avatar: AvatarInput): Promise<string> {
+  if (avatar.kind === "url") {
+    if (!isHttpsImageUrl(avatar.url)) throw fail("Enter a valid https:// image link.");
+    return avatar.url;
+  }
+  const problem = avatarFileProblem(avatar.file);
+  if (problem === "type") throw fail("Only PNG, JPEG, or WebP images are allowed.");
+  if (problem === "size") throw fail("Image must be 500 KB or smaller.");
+  return readFile(avatar.file);
+}
+
 export function createMockAuth(): AuthService {
   return {
     async getSession(): Promise<User | null> {
@@ -69,7 +80,10 @@ export function createMockAuth(): AuthService {
       persistSession(found.user.id);
       return found.user;
     },
-    async register(name, email, password) {
+    async register(name, email, password, avatar) {
+      // Validate the photo before creating anything: a rejected image should never leave a
+      // half-registered account behind.
+      const avatarUrl = avatar === undefined ? undefined : await resolveAvatar(avatar);
       await wait(400);
       if (findByEmail(email) !== undefined) {
         throw fail("An account with this email already exists.", 409, "conflict");
@@ -80,6 +94,7 @@ export function createMockAuth(): AuthService {
         email,
         role: "developer",
         preferences: { theme: "dark" },
+        ...(avatarUrl === undefined ? {} : { avatarUrl }),
       };
       getAccounts().push({ user, password, resetToken: null, resetExpiresAt: null });
       saveAccounts();
@@ -124,10 +139,7 @@ export function createMockAuth(): AuthService {
       saveAccounts();
     },
     async uploadAvatar(userId, file) {
-      if (!AVATAR_TYPES.includes(file.type))
-        throw fail("Only PNG, JPEG, or WebP images are allowed.");
-      if (file.size > AVATAR_MAX_BYTES) throw fail("Image must be 500 KB or smaller.");
-      const url = await readFile(file);
+      const url = await resolveAvatar({ kind: "file", file });
       await wait(300);
       const found = account(userId);
       found.user.avatarUrl = url;

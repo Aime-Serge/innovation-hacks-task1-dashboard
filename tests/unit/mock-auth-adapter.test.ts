@@ -61,6 +61,45 @@ describe("TC-004 mock auth adapter", () => {
     expect((await run(auth.login("ada@example.com", "password123"))).name).toBe("Ada");
   });
 
+  it("TC-005 registering with a photo file stores it as the avatar", async () => {
+    const auth = await fresh();
+    const png = new File(["x"], "a.png", { type: "image/png" });
+    const user = await run(
+      auth.register("Grace", "grace@example.com", "password123", { kind: "file", file: png }),
+    );
+    expect(user.avatarUrl).toMatch(/^data:image\/png/);
+  });
+
+  it("TC-005 registering with an image link stores it as the avatar", async () => {
+    const auth = await fresh();
+    const user = await run(
+      auth.register("Grace", "grace2@example.com", "password123", {
+        kind: "url",
+        url: "https://example.com/grace.png",
+      }),
+    );
+    expect(user.avatarUrl).toBe("https://example.com/grace.png");
+  });
+
+  it("TC-005 an invalid photo or link is refused, and no account is created", async () => {
+    const auth = await fresh();
+    const gif = new File(["x"], "a.gif", { type: "image/gif" });
+    await expect(
+      run(auth.register("Grace", "grace3@example.com", "password123", { kind: "file", file: gif })),
+    ).rejects.toSatisfy((e: unknown) => isServiceError(e));
+    await expect(
+      run(
+        auth.register("Grace", "grace3@example.com", "password123", {
+          kind: "url",
+          url: "http://example.com/grace.png",
+        }),
+      ),
+    ).rejects.toSatisfy((e: unknown) => isServiceError(e));
+    // Neither attempt should have left an account behind: the email is still free.
+    const user = await run(auth.register("Grace", "grace3@example.com", "password123"));
+    expect(user.avatarUrl).toBeUndefined();
+  });
+
   it("TC-004 forgot and reset password: same reply for unknown emails, single-use token", async () => {
     const auth = await fresh();
     expect(await run(auth.forgotPassword("ghost@example.com"))).toEqual({ devResetUrl: null });

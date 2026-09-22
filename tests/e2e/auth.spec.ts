@@ -50,6 +50,44 @@ test.describe("TC-001 landing and authentication", () => {
     });
   });
 
+  test("TC-005 an uploaded photo becomes the avatar, in the header and on the profile page", async ({
+    page,
+  }) => {
+    const email = `photo-${Date.now()}@example.com`;
+    // A real, tiny, valid PNG (1x1 red pixel), so the browser has something genuine to
+    // decode: this proves the photo round-trips and renders, not just that a URL was set.
+    const png = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+      "base64",
+    );
+    await page.goto("/register");
+    await page.getByLabel("Name").fill("Photo Person");
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password", { exact: true }).fill("password123");
+    await page.getByLabel("Confirm password").fill("password123");
+    await page
+      .getByLabel("Upload a photo")
+      .setInputFiles({ name: "avatar.png", mimeType: "image/png", buffer: png });
+    // The live preview proves the file was accepted before submitting.
+    await expect(page.locator("form img")).toBeVisible();
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expect(page).toHaveURL(/\/login\?registered=1/, { timeout: 30_000 });
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Password").fill("password123");
+    await page.getByRole("button", { name: "Log in" }).click();
+    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
+      timeout: 30_000,
+    });
+    // The header shows the photo, not initials, and it actually decoded (no broken image).
+    const headerAvatar = page.locator("header img");
+    await expect(headerAvatar).toBeVisible();
+    expect(await headerAvatar.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(
+      0,
+    );
+    await page.goto("/profile");
+    await expect(page.locator("main img")).toBeVisible();
+  });
+
   test("TC-004 wrong credentials show one plain message and keep the user on login", async ({
     page,
   }) => {

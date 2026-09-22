@@ -11,7 +11,9 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'nonce-${nonce}'`,
-    "img-src 'self' data:",
+    // blob: previews a chosen file before it is stored (ADR-018); https: is any host a person
+    // pastes an avatar link to, which cannot be known in advance.
+    "img-src 'self' data: blob: https:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

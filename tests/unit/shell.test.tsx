@@ -259,6 +259,89 @@ describe("TC-005 auth forms (register redirects to login)", () => {
     expect(auth.register).not.toHaveBeenCalled();
   });
 
+  it("TC-005 an uploaded photo is sent with the new account", async () => {
+    auth.register.mockResolvedValue(testUser);
+    render(<RegisterForm />);
+    await userEvent.type(screen.getByLabelText("Name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    const file = new File(["x"], "ada.png", { type: "image/png" });
+    await userEvent.upload(screen.getByLabelText("Upload a photo"), file);
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
+    expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123", {
+      kind: "file",
+      file,
+    });
+  });
+
+  it("TC-005 an image link is sent when no file was chosen, and picking a file replaces it", async () => {
+    auth.register.mockResolvedValue(testUser);
+    render(<RegisterForm />);
+    await userEvent.type(screen.getByLabelText("Name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    const urlField = screen.getByLabelText("Or paste an image link");
+    await userEvent.type(urlField, "https://example.com/ada.png");
+
+    // Picking a file afterwards replaces the link, not the other way round.
+    const file = new File(["x"], "ada.png", { type: "image/png" });
+    await userEvent.upload(screen.getByLabelText("Upload a photo"), file);
+    expect(urlField).toHaveValue("");
+
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith("/login?registered=1"));
+    expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123", {
+      kind: "file",
+      file,
+    });
+  });
+
+  it("TC-005 a non-https link is rejected without a request, an http link included", async () => {
+    render(<RegisterForm />);
+    await userEvent.type(screen.getByLabelText("Name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    await userEvent.type(
+      screen.getByLabelText("Or paste an image link"),
+      "http://example.com/ada.png",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(screen.getByText("Enter a valid https:// image link.")).toBeInTheDocument();
+    expect(auth.register).not.toHaveBeenCalled();
+  });
+
+  it("TC-005 the file picker only offers acceptable image types", () => {
+    render(<RegisterForm />);
+    expect(screen.getByLabelText("Upload a photo")).toHaveAttribute(
+      "accept",
+      "image/png,image/jpeg,image/webp",
+    );
+  });
+
+  it("TC-005 an oversized photo is refused and blocks submission until it is cleared", async () => {
+    auth.register.mockResolvedValue(testUser);
+    render(<RegisterForm />);
+    await userEvent.type(screen.getByLabelText("Name"), "Ada");
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "password123");
+    await userEvent.type(screen.getByLabelText("Confirm password"), "password123");
+    const big = new File([new Uint8Array(600_000)], "big.png", { type: "image/png" });
+    await userEvent.upload(screen.getByLabelText("Upload a photo"), big);
+    expect(screen.getByText("Image must be 500 KB or smaller.")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(auth.register).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Remove photo" }));
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await waitFor(() =>
+      expect(auth.register).toHaveBeenCalledWith("Ada", "ada@example.com", "password123"),
+    );
+  });
+
   it("TC-005 a taken email names the fix, any other failure stays generic", async () => {
     auth.register.mockRejectedValueOnce(new ServiceError("conflict", "x", 409));
     render(<RegisterForm />);

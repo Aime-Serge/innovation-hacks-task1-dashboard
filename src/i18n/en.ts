@@ -199,6 +199,13 @@ export const en = {
   "auth.backToLogin": "Back to log in",
   "auth.resetPassword": "Reset password",
   "auth.resetInvalid": "This reset link is invalid or has expired.",
+  "auth.avatarHint": "Optional. Add a photo, or your initials are used instead.",
+  "auth.avatarUpload": "Upload a photo",
+  "auth.avatarUrl": "Or paste an image link",
+  "auth.avatarInvalidType": "Only PNG, JPEG, or WebP images are allowed.",
+  "auth.avatarTooLarge": "Image must be 500 KB or smaller.",
+  "auth.avatarInvalidUrl": "Enter a valid https:// image link.",
+  "auth.avatarRemove": "Remove photo",
 
   "notFound.title": "Page not found",
   "notFound.body": "The page you are looking for does not exist or has moved.",

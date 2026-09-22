@@ -33,7 +33,7 @@ export function ProfileView() {
         <Skeleton className="mb-6 h-28" />
       ) : (
         <Card className="mb-6 flex flex-wrap items-center gap-4">
-          <Avatar name={user.name} size="lg" />
+          <Avatar name={user.name} avatarUrl={user.avatarUrl} size="lg" />
           <div className="min-w-0">
             <p className="break-words text-lg font-semibold">{user.name}</p>
             <p className="break-all text-sm text-muted">{user.email}</p>
