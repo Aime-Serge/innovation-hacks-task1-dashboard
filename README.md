@@ -24,6 +24,7 @@ typed mock service layer that Task 2's API replaces without touching a component
 | --- | --- |
 | ![Project detail with progress ring](docs/screenshots/03-project-detail.png) **Project detail:** progress ring and that project's tasks | ![Tasks filtered by status and priority](docs/screenshots/04-filtered-tasks.png) **Tasks:** search, filters and sort, all stored in the URL |
 | ![Dashboard in dark theme](docs/screenshots/01-dashboard-desktop.png) **Light Theme:** light, dark or system, with no flash on load | ![Mobile navigation drawer](docs/screenshots/11-mobile-drawer.png) **Mobile:** the sidebar becomes a focus-trapping drawer under 1024 px |
+| ![Dashboard on a mobile viewport](docs/screenshots/02-dashboard-mobile.png) **Dashboard, mobile:** the same KPIs and activity feed, stacked for narrow viewports | ![Profile page with task statistics](docs/screenshots/10-profile-desktop.png) **Profile:** task statistics, name edit and theme choice |
 
 Every dynamic region has all its states, and each is one URL parameter away (`?scenario=`):
 
@@ -54,6 +55,10 @@ For the production build that the tests use: `npm run build && npm start`.
 | `/tasks` | Search (250 ms debounce), filters, sort, all in the URL; change a status from its card |
 | `/profile` | Your task statistics, edit your name, choose a theme |
 | `/login`, `/register`, `/forgot-password`, `/reset-password` | Mock authentication. Registering sends you to login, it never signs you in. Registering can also add a profile photo — upload a file or paste an image link — shown instead of initials everywhere the avatar appears (ADR-018) |
+
+| | |
+| --- | --- |
+| ![Login page on desktop](docs/screenshots/08-login-desktop.png) **Login** | ![Registration page on desktop](docs/screenshots/09-register-desktop.png) **Register**, with the role and profile-photo fields |
 
 ### Every state is reachable
 
