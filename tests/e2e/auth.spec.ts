@@ -1,18 +1,32 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { signIn } from "./helpers";
 
-async function completeProfessionalRegistration(page: Page) {
-  await page.getByLabel("Discipline").selectOption("backend");
-  await page.getByLabel("Seniority").selectOption("senior");
-  await page.getByLabel("Employment status").selectOption("employed");
-  await page.getByLabel("Company name").fill("Acme");
-  await page.getByLabel("Job title").fill("Engineer");
-  await page.getByLabel("Country").fill("RW");
-  await page.getByLabel("I accept the Terms of Service.").check();
-  await page.getByLabel("I confirm that I meet the minimum age requirement.").check();
-}
-
 test.describe("TC-001 landing and authentication", () => {
+  test("TC-001 the site opens on the welcome page, which leads to login", async ({ page }) => {
+    await page.goto("/");
+    await expect(page).toHaveURL(/localhost:3100\/$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Welcome to DevDash" })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("link", { name: "Join Us" })).toBeVisible();
+    await page.getByRole("banner").getByRole("link", { name: "Log in" }).click();
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
+    await page.getByLabel("Email").fill("aime.serge@example.com");
+    await page.getByLabel("Password").fill("password123");
+    await page.getByRole("button", { name: "Log in" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/, { timeout: 30_000 });
+  });
+
+  test("TC-004 a signed-in visitor still sees the welcome page, offering the dashboard", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.goto("/");
+    await expect(page).toHaveURL(/localhost:3100\/$/);
+    await page.getByRole("main").getByRole("link", { name: "Go to your dashboard" }).click();
+    await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
   test("TC-001 an anonymous visitor is sent to login and back to the page they wanted", async ({
     page,
   }) => {
@@ -25,12 +39,12 @@ test.describe("TC-001 landing and authentication", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Tasks" })).toBeVisible();
   });
 
-  test("TC-001 / opens the dashboard with four KPIs, deadlines and activity", async ({
+  test("TC-001 /dashboard opens the dashboard with four KPIs, deadlines and activity", async ({
     page,
     context,
   }) => {
     await signIn(context);
-    await page.goto("/");
+    await page.goto("/dashboard");
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
     for (const label of ["Active projects", "Open tasks", "Overdue tasks", "Completion rate"]) {
       await expect(page.getByText(label, { exact: true })).toBeVisible();
@@ -40,65 +54,28 @@ test.describe("TC-001 landing and authentication", () => {
     await expect(page.getByRole("article")).toHaveCount(0);
   });
 
-  test("TC-005 creating an account lands on the login page, not inside the app", async ({
+  // MT-01, MF-01, MF-05 (was: single-step form landing on /login; see supersession-log.md).
+  // Not run in this session (no live stack); kept correct and ready for `npm run test:e2e`.
+  test("TC-005 the two-step wizard signs the person in and shows the welcome banner", async ({
     page,
   }) => {
     const email = `new-${Date.now()}@example.com`;
     await page.goto("/register");
-    await page.getByLabel("Name").fill("New Person");
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+    await page.getByLabel("First name").fill("New");
+    await page.getByLabel("Last name").fill("Person");
     await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill("password123");
-    await page.getByLabel("Confirm password").fill("password123");
-    await completeProfessionalRegistration(page);
+    await page.getByLabel("Password", { exact: true }).fill("password123456");
+    await page.getByRole("button", { name: "Next" }).click();
+    await expect(page.getByRole("heading", { name: "Tell us about your work" })).toBeVisible();
+    await page.getByLabel("Country").selectOption("RW");
+    await page.getByLabel(/accept the Terms/).check();
+    await page.getByLabel(/confirm that I meet/).check();
     await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page).toHaveURL(/\/login\?registered=1/, { timeout: 30_000 });
-    await expect(page.getByText("Account created. Log in to continue.")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Dashboard" })).toHaveCount(0);
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill("password123");
-    await page.getByRole("button", { name: "Log in" }).click();
     await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
       timeout: 30_000,
     });
-  });
-
-  test("TC-005 an uploaded photo becomes the avatar, in the header and on the profile page", async ({
-    page,
-  }) => {
-    const email = `photo-${Date.now()}@example.com`;
-    // A real, tiny, valid PNG (1x1 red pixel), so the browser has something genuine to
-    // decode: this proves the photo round-trips and renders, not just that a URL was set.
-    const png = Buffer.from(
-      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
-      "base64",
-    );
-    await page.goto("/register");
-    await page.getByLabel("Name").fill("Photo Person");
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill("password123");
-    await page.getByLabel("Confirm password").fill("password123");
-    await page
-      .getByLabel("Upload a photo")
-      .setInputFiles({ name: "avatar.png", mimeType: "image/png", buffer: png });
-    // The live preview proves the file was accepted before submitting.
-    await expect(page.locator("form img")).toBeVisible();
-    await completeProfessionalRegistration(page);
-    await page.getByRole("button", { name: "Create account" }).click();
-    await expect(page).toHaveURL(/\/login\?registered=1/, { timeout: 30_000 });
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill("password123");
-    await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible({
-      timeout: 30_000,
-    });
-    // The header shows the photo, not initials, and it actually decoded (no broken image).
-    const headerAvatar = page.locator("header img");
-    await expect(headerAvatar).toBeVisible();
-    expect(
-      await headerAvatar.evaluate((img: HTMLImageElement) => img.naturalWidth),
-    ).toBeGreaterThan(0);
-    await page.goto("/profile");
-    await expect(page.locator("main img")).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "profile is" })).toBeVisible();
   });
 
   test("TC-004 wrong credentials show one plain message and keep the user on login", async ({
@@ -118,7 +95,7 @@ test.describe("TC-001 landing and authentication", () => {
   }) => {
     await signIn(context);
     await page.goto("/login");
-    await expect(page).toHaveURL(/localhost:3100\/$/);
+    await expect(page).toHaveURL(/localhost:3100\/dashboard$/);
     await page.getByRole("button", { name: /Account menu/ }).click();
     await page.getByRole("menuitem", { name: "Log out" }).click();
     await expect(page).toHaveURL(/\/login/, { timeout: 30_000 });
@@ -138,6 +115,6 @@ test.describe("TC-001 landing and authentication", () => {
     await page.getByLabel("Email").fill("aime.serge@example.com");
     await page.getByLabel("Password").fill("password123");
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page).toHaveURL(/localhost:3100\/$/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/localhost:3100\/dashboard$/, { timeout: 30_000 });
   });
 });

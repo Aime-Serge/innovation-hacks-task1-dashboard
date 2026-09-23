@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { DASHBOARD_PATH } from "@/lib/navigation";
+import { sessionMarkerName } from "@/lib/session/marker";
 
-// Redirect away from these if a mock session already exists.
+// Redirect away from these if a session already exists.
 const AUTH_ENTRY_PATHS = ["/login", "/register"];
-// Never require a session, and never redirect away regardless of one.
-const ALWAYS_PUBLIC_PATHS = ["/forgot-password", "/reset-password"];
+// Never require a session, and never redirect away regardless of one: "/" is the welcome page,
+// which every visitor sees first (it offers the dashboard to someone already signed in).
+const ALWAYS_PUBLIC_PATHS = ["/", "/forgot-password", "/reset-password"];
 
 /** NFR-16: a fresh nonce per request, so script-src needs no 'unsafe-inline'. */
 export function contentSecurityPolicy(nonce: string, dev: boolean): string {
@@ -11,9 +14,10 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'nonce-${nonce}'`,
-    // blob: previews a chosen file before it is stored (ADR-018); https: is any host a person
-    // pastes an avatar link to, which cannot be known in advance.
-    "img-src 'self' data: blob: https:",
+    // https: is a profile photo pasted as a link (ADR-426); its host cannot be known in advance.
+    "img-src 'self' data: https:",
+    "connect-src 'self'", // the browser talks only to this origin (ADR-401, NFR-416)
+    "object-src 'none'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -25,16 +29,20 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
 // before the client-side redirect; it is not an authorization control (ADR-010).
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  // The server layer answers its own calls: it needs no session to log in or register, and the
+  // API authenticates every other call itself, so a redirect to a page would only break them.
+  if (pathname.startsWith("/api/bff/")) return NextResponse.next();
   const isAuthEntry = AUTH_ENTRY_PATHS.includes(pathname);
   const isPublic = isAuthEntry || ALWAYS_PUBLIC_PATHS.includes(pathname);
-  const hasSession = request.cookies.has("mock_session");
+  // The marker holds no token: it only says a session exists (ADR-425). The API still checks it.
+  const hasSession = request.cookies.has(sessionMarkerName());
 
   if (!isPublic && !hasSession) {
     const url = new URL("/login", request.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
-  if (isAuthEntry && hasSession) return NextResponse.redirect(new URL("/", request.url));
+  if (isAuthEntry && hasSession) return NextResponse.redirect(new URL(DASHBOARD_PATH, request.url));
 
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = contentSecurityPolicy(nonce, process.env.NODE_ENV === "development");

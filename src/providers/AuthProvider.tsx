@@ -11,10 +11,12 @@ import {
   type ReactNode,
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { createHttpAuth, onSessionEnded } from "@/adapters/http";
 import { createMockAuth } from "@/adapters/mock";
 import { hardNavigate, safeInternalPath } from "@/lib/navigation";
 import type { User } from "@/schemas";
 import type { AuthService } from "@/services/auth";
+import { useTheme } from "./ThemeProvider";
 
 type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 type AuthValue = {
@@ -30,12 +32,16 @@ type AuthValue = {
 
 const AuthContext = createContext<AuthValue | null>(null);
 const ENTRY_PATHS = ["/login", "/register"];
-const PUBLIC_PATHS = [...ENTRY_PATHS, "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/", ...ENTRY_PATHS, "/forgot-password", "/reset-password"];
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const auth = useMemo(() => createMockAuth(), []);
+  const auth = useMemo(
+    () => (process.env["NEXT_PUBLIC_DATA_SOURCE"] === "mock" ? createMockAuth() : createHttpAuth()),
+    [],
+  );
   const [user, setUser] = useState<User | null>(null);
   const [status, setStatus] = useState<SessionStatus>("loading");
+  const { setTheme } = useTheme();
   const userRef = useRef<User | null>(null);
   const getUserId = useCallback(() => userRef.current?.id, []);
   useEffect(() => {
@@ -53,6 +59,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setStatus(session === null ? "unauthenticated" : "authenticated");
     });
   }, [auth]);
+
+  useEffect(() => {
+    if (user !== null) setTheme(user.preferences.theme);
+  }, [setTheme, user]);
+
+  // A refresh that fails ends the session wherever the person is (FR-405).
+  useEffect(
+    () =>
+      onSessionEnded(() => {
+        setUser(null);
+        setStatus("unauthenticated");
+      }),
+    [],
+  );
 
   // Backs up proxy.ts, which only checks that a cookie exists.
   useEffect(() => {

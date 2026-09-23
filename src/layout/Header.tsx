@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense } from "react";
 import { t } from "@/i18n";
 import { CreateMenu } from "./CreateMenu";
@@ -17,11 +18,19 @@ export function Header() {
   return (
     <header className="sticky top-0 z-30 flex h-(--header-height) w-full items-center gap-2 border-b border-line bg-surface px-4">
       <MobileNav />
-      <Link href="/" className="touch-target flex items-center gap-2 rounded-md pr-1 font-semibold">
-        {/* eslint-disable-next-line @next/next/no-img-element -- ADR-018: a plain <img>, not
-            next/image, mirrors Avatar's own reasoning for a small fixed logo mark. */}
-        <img src="/logo.png" alt="" aria-hidden="true" className="size-8 rounded-full bg-white" />
-        <span className="hidden sm:inline">{t("app.name")}</span>
+      <Link
+        href="/dashboard"
+        className="touch-target flex items-center gap-2 rounded-md pr-1 font-semibold"
+      >
+        <Image
+          src="/logo.png"
+          alt=""
+          aria-hidden="true"
+          width={32}
+          height={32}
+          className="size-8 rounded-full bg-white"
+        />
+        <span className="sr-only sm:not-sr-only">{t("app.name")}</span>
       </Link>
       <div className="flex-1" />
       <Suspense fallback={null}>
