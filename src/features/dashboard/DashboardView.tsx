@@ -15,8 +15,9 @@ import { ActivityFeed } from "./ActivityFeed";
 import { DeadlineList } from "./DeadlineList";
 import { KpiTile } from "./KpiTile";
 import { computeKpis, upcomingDeadlines } from "./kpis";
-import { teamStats } from "./teamStats";
+import { computeTeamStats } from "./teamStats";
 import { TeamPanel } from "./TeamPanel";
+import { WelcomeBanner } from "./WelcomeBanner";
 
 const statusOf = (...queries: { isPending: boolean; isError: boolean }[]): RegionStatus =>
   queries.some((q) => q.isError)
@@ -25,7 +26,11 @@ const statusOf = (...queries: { isPending: boolean; isError: boolean }[]): Regio
       ? "loading"
       : "success";
 
-/** FR-01..04: three independent regions, so one failure never blanks the page (NFR-19). */
+/** FR-01..04: three independent regions, so one failure never blanks the page (NFR-19).
+ * RF-04/RF-05: one route, one component for both roles; the scope of the data (own vs
+ * team-wide) already comes from the API (BR-401) via these same queries. RF-06/RF-07: the
+ * title, KPI labels and the team panel are the only things that vary by role, from
+ * `user.role` already on the session — see docs/role-alignment-contract.md. */
 export function DashboardView() {
   const { user } = useAuth();
   const isLead = user?.role === "lead";
@@ -44,10 +49,11 @@ export function DashboardView() {
     () => upcomingDeadlines(tasks.data?.items ?? [], today, addDays(today, 7)),
     [tasks.data, today],
   );
-  // Fed entirely from the tasks/users queries above: no extra fetch for either role.
-  const team = useMemo(
-    () => (isLead ? teamStats(tasks.data?.items ?? [], users.data ?? [], today) : []),
-    [isLead, tasks.data, users.data, today],
+  // RF-07: computed only when rendered (isLead below); no extra fetch either way — it reads
+  // the same tasks/users queries every dashboard already makes.
+  const teamStats = useMemo(
+    () => (isLead ? computeTeamStats(users.data ?? [], tasks.data?.items ?? [], today) : []),
+    [isLead, users.data, tasks.data, today],
   );
 
   const retryKpis = () => {
@@ -55,18 +61,12 @@ export function DashboardView() {
     void projects.refetch();
   };
 
-  const firstName = user?.name.split(" ")[0] ?? user?.name ?? "";
-
   return (
     <>
-      {user !== null && (
-        <p className="mb-1 text-sm font-medium text-muted">
-          {t("dashboard.greeting", { name: firstName })}
-        </p>
-      )}
+      <WelcomeBanner />
       <PageHeader
-        title={t(isLead ? "dashboard.title.lead" : "dashboard.title")}
-        description={t("dashboard.description")}
+        title={isLead ? t("dashboard.title.lead") : t("dashboard.title")}
+        description={isLead ? t("dashboard.description.lead") : t("dashboard.description")}
       />
       <section aria-labelledby="kpi-heading" className="mb-6">
         <h2 id="kpi-heading" className="sr-only">
@@ -154,11 +154,7 @@ export function DashboardView() {
           </RegionState>
         </section>
       </Grid>
-      {isLead && tasks.data !== undefined && users.data !== undefined && (
-        <div className="mt-6">
-          <TeamPanel stats={team} />
-        </div>
-      )}
+      {isLead && <TeamPanel members={teamStats} />}
     </>
   );
 }

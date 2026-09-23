@@ -1,166 +1,187 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type SyntheticEvent } from "react";
+import { useState } from "react";
+import { useAuth } from "@/providers/AuthProvider";
 import { t } from "@/i18n";
-import { AVATAR_ACCEPT, isHttpsImageUrl } from "@/lib/avatar";
-import { formText } from "@/lib/form";
-import type { AvatarInput } from "@/services/auth";
-import { Avatar } from "@/ui/Avatar";
-import { Button } from "@/ui/Button";
-import { FormField } from "@/ui/FormField";
-import { Input } from "@/ui/Input";
+import { hardNavigate } from "@/lib/navigation";
+import { setWelcomeFlag } from "@/lib/welcome";
+import type { Role } from "@/schemas";
+import { ServiceError } from "@/services/types";
+import { ProgressBar } from "@/ui/ProgressBar";
 import { FormAlert } from "./messages";
+import { RegisterAccountStep } from "./RegisterAccountStep";
+import { RegisterProfileStep } from "./RegisterProfileStep";
 import { RegisterRoleDialog } from "./RegisterRoleDialog";
-import { RegistrationProfileFields } from "./RegistrationProfileFields";
-import { registrationProfile } from "./registration-profile";
-import { useAvatarField } from "./useAvatarField";
-import { useRegisterFlow } from "./useRegisterFlow";
+import {
+  emptyAccount,
+  emptyProfile,
+  errorsFrom,
+  profileBlock,
+  type Account,
+  type AccountErrors,
+  type ProfileDraftForm,
+  type ProfileErrors,
+} from "./registration-form";
 
-const MIN_PASSWORD = 8;
+const LINK_FIELD_MAP = { "links.github": "links", "links.linkedin": "links" };
 
-/** Creating an account never signs anyone in: it sends them to the login page. */
+/** MF-01: two-step registration (account, then professional details and consent). */
 export function RegisterForm() {
-  const [errors, setErrors] = useState<{
-    email?: string | undefined;
-    password?: string | undefined;
-    avatar?: string | undefined;
-    profile?: string | undefined;
-    form?: string | undefined;
-  }>({});
-  const { busy, roleDialogOpen, setRoleDialogOpen, open, confirm } = useRegisterFlow(setErrors);
-  const setAvatarError = (updater: (avatar: string | undefined) => string | undefined) =>
-    setErrors((e) => ({ ...e, avatar: updater(e.avatar) }));
-  const {
-    avatarFile,
-    avatarUrlText,
-    previewUrl,
-    fileInputRef,
-    chooseFile,
-    changeUrl,
-    removePhoto,
-  } = useAvatarField(setAvatarError);
-  const [termsAccepted, setTermsAccepted] = useState(false);
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const { auth } = useAuth();
+  const [step, setStep] = useState<1 | 2>(1);
+  const [account, setAccount] = useState<Account>(emptyAccount);
+  const [accountErrors, setAccountErrors] = useState<AccountErrors>({});
+  const [profile, setProfile] = useState<ProfileDraftForm>(emptyProfile);
+  const [profileErrors, setProfileErrors] = useState<ProfileErrors>({});
+  // A top-level field, like givenName, not part of the profile block (ADR-426).
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarError, setAvatarError] = useState<string | undefined>(undefined);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [roleDialogOpen, setRoleDialogOpen] = useState(false);
 
-  // Validates the whole form, then opens RegisterRoleDialog instead of submitting directly;
-  // the dialog's onConfirm runs the actual auth.register call (useRegisterFlow.confirm).
-  const submit = (event: SyntheticEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    const text = (key: string) => formText(form, key);
-    if (text("password").length < MIN_PASSWORD) {
-      setErrors({ password: t("auth.passwordShort", { min: MIN_PASSWORD }) });
-      return;
+  const checkStep1 = async () => {
+    try {
+      await auth.validateRegistration({ step: 1, ...account });
+      setAccountErrors({});
+    } catch (failure) {
+      if (failure instanceof ServiceError && failure.status === 422) {
+        setAccountErrors(errorsFrom(failure));
+      }
     }
-    if (text("password") !== text("confirm")) {
-      setErrors({ password: t("auth.passwordMismatch") });
-      return;
+  };
+
+  const goNext = async () => {
+    setBusy(true);
+    setFormError(null);
+    try {
+      await auth.validateRegistration({ step: 1, ...account });
+      setAccountErrors({});
+      setStep(2);
+    } catch (failure) {
+      if (failure instanceof ServiceError && failure.status === 422) {
+        setAccountErrors(errorsFrom(failure));
+      } else {
+        setFormError(t("auth.genericError"));
+      }
+    } finally {
+      setBusy(false);
     }
-    // A rejected file leaves its message up until it is replaced or cleared; do not silently
+  };
+
+  const checkStep2 = async () => {
+    try {
+      await auth.validateRegistration({
+        step: 2,
+        profile: profileBlock(profile),
+        termsAccepted: profile.termsAccepted,
+        ageConfirmed: profile.ageConfirmed,
+      });
+      setProfileErrors({});
+    } catch (failure) {
+      setProfileErrors(errorsFrom(failure, LINK_FIELD_MAP));
+    }
+  };
+
+  // RF-01: the role choice is asked in its own dialog after step 2, never pre-selected;
+  // Create account there is disabled until one option is chosen (RegisterRoleDialog).
+  const openRoleDialog = () => {
+    // A rejected photo leaves its message up until it is replaced or cleared; do not silently
     // register without the photo the person was still trying to fix.
-    if (errors.avatar !== undefined) return;
-    const url = avatarUrlText.trim();
-    if (url !== "" && !isHttpsImageUrl(url)) {
-      setErrors({ avatar: t("auth.avatarInvalidUrl") });
+    if (avatarError !== undefined) return;
+    setRoleDialogOpen(true);
+  };
+
+  const submit = async (role: Role) => {
+    setBusy(true);
+    setFormError(null);
+    try {
+      await auth.register({
+        givenName: account.givenName.trim(),
+        familyName: account.familyName.trim(),
+        email: account.email.trim(),
+        password: account.password,
+        profile: profileBlock(profile),
+        termsAccepted: true,
+        ageConfirmed: true,
+        role,
+        ...(avatarUrl !== null ? { avatarUrl } : {}),
+      });
+      // ADR-619 (was MF-01 "success signs the person in"; see supersession-log.md): registering
+      // no longer starts a session by itself. The person confirms their own new credentials by
+      // logging in, rather than the app trusting the form submission as proof of the password.
+      setWelcomeFlag();
+      hardNavigate("/login?registered=1");
+    } catch (failure) {
+      handleSubmitFailure(failure);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSubmitFailure = (failure: unknown) => {
+    // Whatever went wrong, the person needs to see it on the form the failing field lives on,
+    // not behind the role dialog.
+    setRoleDialogOpen(false);
+    if (!(failure instanceof ServiceError)) {
+      setFormError(t("auth.genericError"));
       return;
     }
-    const profile = registrationProfile(form, termsAccepted, ageConfirmed);
-    if (profile === null) {
-      setErrors({ profile: t("auth.profileRequired") });
-      return;
-    }
-    const avatar: AvatarInput | undefined =
-      avatarFile !== null
-        ? { kind: "file", file: avatarFile }
-        : url !== ""
-          ? { kind: "url", url }
-          : undefined;
-    open({
-      name: text("name").trim(),
-      email: text("email").trim(),
-      password: text("password"),
-      avatar,
-      profile,
-    });
+    if (failure.status === 422) {
+      // avatarUrl is not part of the profile block, so it is routed to its own field rather
+      // than left unread inside profileErrors (ProfileErrors has no key for it).
+      setAvatarError(failure.details?.find((d) => d.field === "avatarUrl")?.message);
+      setProfileErrors(errorsFrom(failure, { ...LINK_FIELD_MAP, avatarUrl: "__avatar__" }));
+    } else if (failure.status === 409) {
+      setStep(1);
+      setAccountErrors({ email: t("auth.emailTaken") });
+    } else if (failure.code === "REGISTRATION_DISABLED") setFormError(t("auth.registrationClosed"));
+    else if (failure.status === 429) setFormError(t("auth.tooManyAttempts"));
+    else setFormError(t("auth.genericError"));
   };
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-      {errors.form !== undefined && <FormAlert>{errors.form}</FormAlert>}
-      <FormField id="reg-name" label={t("auth.name")}>
-        {(c) => <Input {...c} name="name" autoComplete="name" required maxLength={80} />}
-      </FormField>
-      <FormField id="reg-email" label={t("auth.email")} error={errors.email}>
-        {(c) => <Input {...c} name="email" type="email" autoComplete="email" required />}
-      </FormField>
-      <FormField id="reg-password" label={t("auth.password")} error={errors.password}>
-        {(c) => (
-          <Input {...c} name="password" type="password" autoComplete="new-password" required />
-        )}
-      </FormField>
-      <FormField id="reg-confirm" label={t("auth.confirmPassword")}>
-        {(c) => (
-          <Input {...c} name="confirm" type="password" autoComplete="new-password" required />
-        )}
-      </FormField>
-      <div className="flex flex-col gap-2 rounded-md border border-line-strong p-3">
-        <div className="flex items-center gap-3">
-          <Avatar name="" avatarUrl={previewUrl} size="lg" />
-          <p className="text-sm text-muted">{t("auth.avatarHint")}</p>
-        </div>
-        <FormField id="reg-avatar-file" label={t("auth.avatarUpload")} error={errors.avatar}>
-          {(c) => (
-            <Input
-              {...c}
-              ref={fileInputRef}
-              name="avatarFile"
-              type="file"
-              accept={AVATAR_ACCEPT}
-              onChange={(event) => chooseFile(event.target.files?.[0])}
-            />
-          )}
-        </FormField>
-        <FormField id="reg-avatar-url" label={t("auth.avatarUrl")}>
-          {(c) => (
-            <Input
-              {...c}
-              name="avatarUrl"
-              type="url"
-              placeholder="https://…"
-              value={avatarUrlText}
-              onChange={(event) => changeUrl(event.target.value)}
-            />
-          )}
-        </FormField>
-        {(previewUrl !== null || errors.avatar !== undefined) && (
-          <Button type="button" size="sm" onClick={removePhoto} className="self-start">
-            {t("auth.avatarRemove")}
-          </Button>
-        )}
-      </div>
-      {errors.profile !== undefined && <FormAlert>{errors.profile}</FormAlert>}
-      <RegistrationProfileFields
-        termsAccepted={termsAccepted}
-        ageConfirmed={ageConfirmed}
-        onTermsAccepted={setTermsAccepted}
-        onAgeConfirmed={setAgeConfirmed}
+    <div className="flex flex-col gap-4">
+      <ProgressBar value={step === 1 ? 50 : 100} label={t("auth.step", { step, total: 2 })} />
+      <p className="text-sm text-muted">{t("auth.step", { step, total: 2 })}</p>
+      {formError !== null && <FormAlert>{formError}</FormAlert>}
+      {step === 1 ? (
+        <RegisterAccountStep
+          account={account}
+          errors={accountErrors}
+          busy={busy}
+          onChange={setAccount}
+          onBlurField={() => void checkStep1()}
+          onNext={() => void goNext()}
+        />
+      ) : (
+        <RegisterProfileStep
+          profile={profile}
+          errors={profileErrors}
+          busy={busy}
+          onChange={setProfile}
+          onBlurField={() => void checkStep2()}
+          onBack={() => setStep(1)}
+          onSubmit={openRoleDialog}
+          avatarUrl={avatarUrl}
+          avatarError={avatarError}
+          onAvatarChange={setAvatarUrl}
+          onAvatarError={setAvatarError}
+        />
+      )}
+      <RegisterRoleDialog
+        open={roleDialogOpen}
+        onOpenChange={setRoleDialogOpen}
+        busy={busy}
+        onConfirm={(role) => void submit(role)}
       />
-      <Button type="submit" variant="primary" disabled={busy}>
-        {busy ? t("auth.creating") : t("auth.createAccount")}
-      </Button>
       <p className="text-sm">
         {t("auth.haveAccount")}{" "}
         <Link href="/login" className="text-accent-fg underline">
           {t("auth.login")}
         </Link>
       </p>
-      <RegisterRoleDialog
-        open={roleDialogOpen}
-        onOpenChange={setRoleDialogOpen}
-        busy={busy}
-        onConfirm={(role) => void confirm(role)}
-      />
-    </form>
+    </div>
   );
 }

@@ -1,224 +1,68 @@
-# DevDash: Developer Productivity Dashboard
+# DevDash
 
-An at-a-glance view of where every project and task stands. Task 1 of the
-Innovation Hacks Full Stack Development Internship: a strict-TypeScript Next.js
-frontend, built to the _Engineering Standards Pack (Task 1)_ and running on a
-typed mock service layer that Task 2's API replaces without touching a component.
+Task 1's developer productivity dashboard, upgraded with the Task 4 frontend features and architecture. This repository remains frontend-only: it includes the typed API client and a mock adapter, while the API can be run separately.
 
-![Node 22+](https://img.shields.io/badge/node-22%2B-339933) ![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178c6) ![Next.js 16](https://img.shields.io/badge/Next.js-16-000000)
+## Features
 
-![DevDash dashboard on desktop](docs/screenshots/12-dashboard-dark.png)
+- Dashboard KPIs, deadlines, activity, project progress, task assignment, search and filters.
+- Registration and login, protected routes, professional profiles, member profiles, settings and account preferences.
+- AI task suggestions, prioritisation and project summaries. Suggestions are reviewed and confirmed by the user.
+- Typed services with HTTP and mock adapters; same-origin Next.js BFF keeps session tokens in HttpOnly cookies.
+- Responsive layouts, light/dark/system themes, accessible UI, and loading, empty, error and retry states.
 
-- **Live site:** https://task-management-dashboard-two-beta.vercel.app (deploys from `main`; this rebuild lives on `task/1-frontend` until it is merged)
-- **Demo video:** _add the link after recording, see [DEMO_SCRIPT.md](DEMO_SCRIPT.md)_
-- **Demo account:** `aime.serge@example.com` / `password123` (mock login, see [ADR-010](docs/adr/ADR-010-mock-auth.md); do not enter a real password)
-- **Status:** the quality gate is not fully green. Two Pack budgets are missed (first-load JavaScript and Lighthouse performance); see [Quality gate](#quality-gate) and [ADR-017](docs/adr/ADR-017-first-load-javascript.md).
+## Screenshots
 
-## Contents
+Fresh screenshots of the updated dashboard, captured with synthetic data at 1440x900 and 390x844.
 
-[Tour](#tour) · [Run it](#run-it-3-commands) · [Features](#what-to-look-at) · [Scenarios](#every-state-is-reachable) · [Tech stack](#tech-stack) · [Architecture](#architecture) · [Scripts](#scripts) · [Quality gate](#quality-gate) · [Security](#security) · [Accessibility](#accessibility) · [Roadmap](#roadmap) · [Contributing](#contributing) · [Known limitations](#known-limitations)
-
-## Tour
-
-| | |
-| --- | --- |
-| ![Project detail with progress ring](docs/screenshots/03-project-detail.png) **Project detail:** progress ring and that project's tasks | ![Tasks filtered by status and priority](docs/screenshots/04-filtered-tasks.png) **Tasks:** search, filters and sort, all stored in the URL |
-| ![Dashboard in dark theme](docs/screenshots/01-dashboard-desktop.png) **Light Theme:** light, dark or system, with no flash on load | ![Mobile navigation drawer](docs/screenshots/11-mobile-drawer.png) **Mobile:** the sidebar becomes a focus-trapping drawer under 1024 px |
-| ![Dashboard on a mobile viewport](docs/screenshots/02-dashboard-mobile.png) **Dashboard, mobile:** the same KPIs and activity feed, stacked for narrow viewports | ![Profile page with task statistics](docs/screenshots/10-profile-desktop.png) **Profile:** task statistics, name edit and theme choice |
-
-Every dynamic region has all its states, and each is one URL parameter away (`?scenario=`):
-
-| Loading | Empty | Error with Retry |
+| Screen | Desktop | Mobile |
 | --- | --- | --- |
-| ![Loading skeletons](docs/screenshots/05-loading-state.png) | ![Empty state](docs/screenshots/06-empty-state.png) | ![Error state](docs/screenshots/07-error-state.png) |
+| Welcome | ![Welcome, desktop](docs/screenshots/task-4/00-welcome-desktop.png) | ![Welcome, mobile](docs/screenshots/task-4/00-welcome-mobile.png) |
+| Login | ![Login, desktop](docs/screenshots/task-4/01-login-desktop.png) | ![Login, mobile](docs/screenshots/task-4/01-login-mobile.png) |
+| Registration | ![Registration, desktop](docs/screenshots/task-4/02-register-desktop.png) | ![Registration, mobile](docs/screenshots/task-4/02-register-mobile.png) |
+| Dashboard | ![Dashboard, desktop](docs/screenshots/task-4/03-dashboard-desktop.png) | ![Dashboard, mobile](docs/screenshots/task-4/03-dashboard-mobile.png) |
+| Projects | ![Projects, desktop](docs/screenshots/task-4/04-projects-desktop.png) | ![Projects, mobile](docs/screenshots/task-4/04-projects-mobile.png) |
+| Tasks | ![Tasks, desktop](docs/screenshots/task-4/05-tasks-desktop.png) | ![Tasks, mobile](docs/screenshots/task-4/05-tasks-mobile.png) |
+| Profile | ![Profile, desktop](docs/screenshots/task-4/06-profile-desktop.png) | ![Profile, mobile](docs/screenshots/task-4/06-profile-mobile.png) |
+| Settings | ![Settings, desktop](docs/screenshots/task-4/07-settings-desktop.png) | ![Settings, mobile](docs/screenshots/task-4/07-settings-mobile.png) |
+| Member profile | ![Member profile, desktop](docs/screenshots/task-4/08-member-profile-desktop.png) | ![Member profile, mobile](docs/screenshots/task-4/08-member-profile-mobile.png) |
+| Task assignment | ![Task assignment, desktop](docs/screenshots/task-4/09-task-assign-picker-desktop.png) | ![Task assignment, mobile](docs/screenshots/task-4/09-task-assign-picker-mobile.png) |
 
-## Run it (3 commands)
+## Run locally
 
-Needs Node 22 or newer.
+Requires Node.js 22 or newer.
 
 ```bash
-git clone https://github.com/Aime-Serge/innovation-hacks-task1-dashboard.git && cd innovation-hacks-task1-dashboard
 npm ci
-npm run dev        # http://localhost:3000
+cp .env.example .env.local
 ```
 
-For the production build that the tests use: `npm run build && npm start`.
-`.env.example` lists the only optional variable (`NEXT_PUBLIC_SCENARIO_SWITCHER`).
+Set `API_BASE_URL` and `SITE_URL` in `.env.local` to connect to the API, then start the frontend:
 
-## What to look at
+```bash
+npm run dev
+```
 
-| Route | What it shows |
+For frontend-only exploration, set `NEXT_PUBLIC_DATA_SOURCE=mock` in `.env.local` before starting Next.js. The mock adapter provides seeded data and the scenario switcher.
+
+## Routes
+
+| Route | Purpose |
 | --- | --- |
-| `/` | Four KPIs, deadlines for the next 7 days, recent activity |
-| `/projects` | Project cards with progress; search, filter, sort; create a project |
-| `/projects/[id]` | Progress ring, that project's tasks, edit, add a task, not-found state |
-| `/tasks` | Search (250 ms debounce), filters, sort, all in the URL; change a status from its card |
-| `/profile` | Your task statistics, edit your name, choose a theme |
-| `/login`, `/register`, `/forgot-password`, `/reset-password` | Mock authentication. Registering sends you to login, it never signs you in. Registering can also add a profile photo — upload a file or paste an image link — shown instead of initials everywhere the avatar appears (ADR-018) |
-
-| | |
-| --- | --- |
-| ![Login page on desktop](docs/screenshots/08-login-desktop.png) **Login** | ![Registration page on desktop](docs/screenshots/09-register-desktop.png) **Register**, with the role and profile-photo fields |
-
-### Every state is reachable
-
-Append `?scenario=<name>` to any URL, or use the **Scenario** select in the header.
-
-| Scenario | What happens |
-| --- | --- |
-| `default` | Realistic mixed data |
-| `loading` | Every request takes 3 s; skeletons hold the layout |
-| `empty` | No projects, tasks or activity |
-| `error` | Every list request fails with a 500 |
-| `partial-error` | Only the tasks request fails; the rest of the page works |
-| `flaky` | The first request fails, Retry succeeds |
-| `update-fails` | A status change fails and rolls back with an error toast |
-| `large` | 500 tasks and 40 projects |
-| `edge-text` | 80-character names, long words, emoji, right-to-left text |
-
-## Scripts
-
-| Command | What it checks |
-| --- | --- |
-| `npm run dev` / `build` / `start` | Development server, production build, production server |
-| `npm run typecheck` | `tsc --noEmit` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` |
-| `npm run lint` | ESLint (typescript-eslint strict, layer boundaries, no `any`, no literal JSX text), Prettier, no raw design values outside the token file |
-| `npm run check:no-js` | Fails on any `.js`, `.jsx`, `.mjs` or `.cjs` file (the allowlist is empty; PostCSS is configured in `postcss.config.json`) |
-| `npm test` | Vitest unit, component and contract tests with an 80% coverage threshold |
-| `npm run test:e2e` | Playwright journeys per scenario at 3 viewports, plus security headers, JS budget and interaction latency |
-| `npm run test:a11y` | axe on every route, in both themes and every scenario |
-| `npm run lighthouse` | Lighthouse (mobile) on `/`, `/projects`, `/tasks`, `/profile` |
-| `npm run audit` | `npm audit` for high and critical, plus a secret scan |
-| `npm run gate` | All of the above in the Pack's order, stopping at the first failure |
-
-## Tech stack
-
-| Concern | Choice |
-| --- | --- |
-| Framework | Next.js 16 (App Router, Turbopack), React 19, strict TypeScript |
-| Styling | Tailwind CSS v4 driven by design tokens (light, dark, system) |
-| Server state | TanStack Query (loading, error, retry, cache, optimistic updates) |
-| Validation | Zod (`zod/mini`) at the service boundary; every type is inferred from a schema |
-| Accessible primitives | Radix UI (dialog, menu, toast), loaded on first use |
-| Testing | Vitest and Testing Library, Playwright (Chromium, Firefox; WebKit in CI), axe-core, Lighthouse |
-| Quality | ESLint (typescript-eslint strict, layer boundaries), Prettier, `tsc --noEmit` |
-| CI | GitHub Actions, Dependabot |
+| `/` | Welcome page |
+| `/dashboard` | Dashboard overview |
+| `/projects`, `/projects/[id]` | Browse and manage projects |
+| `/tasks` | Search, filter, sort and update tasks |
+| `/people/[id]` | View a member profile |
+| `/profile`, `/profile/edit` | View and edit your profile |
+| `/settings` | Account, privacy and preference settings |
+| `/login`, `/register` | Sign in and register |
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  A[app routes] --> F[features]
-  F --> U[ui primitives]
-  F --> S[service interfaces]
-  P[providers] --> M[adapters/mock]
-  P -.Task 2.-> H[adapters/http]
-  S -.implemented by.-> M
-```
+The Next.js App Router contains the screens and same-origin `/api/bff` route. Features depend on typed service contracts. `src/adapters/http` calls the API through the server layer; `src/adapters/mock` supports local demos and scenarios. Schemas validate service responses, and shared UI components provide accessible forms, dialogs, menus and feedback states.
 
-```
-app/ routes  →  features/  →  ui/ primitives and composites
-                   │
-                   ▼
-             services/ (interfaces)  ←  providers/  →  adapters/mock  (adapters/http in Task 2)
-```
+The API contract snapshot is [docs/api/openapi.json](docs/api/openapi.json), with generated TypeScript types in [src/generated/api-types.ts](src/generated/api-types.ts). Refresh them with `npm run generate:api` after updating the contract.
 
-Dependencies point one way, and ESLint fails the build if that breaks: `ui/`
-imports no feature, service or adapter; features never import an adapter; only
-`src/providers` does.
+## Frontend checks
 
-```
-src/
-  app/          routes, layouts, error, not-found, robots
-  features/     dashboard, projects, tasks, profile, auth, data (query hooks), shared
-  ui/           Button, Input, Badge, Dialog, DropdownMenu, Toast, ProgressBar/Ring, RegionState …
-  layout/       AppShell, Header, Sidebar, Grid, PageHeader, SkipLink
-  services/     ProjectService, TaskService, UserService, ActivityService, AuthService
-  adapters/mock fixtures, latency and failure injection, mock auth
-  providers/    services, auth, theme, scenario, query client
-  schemas/      Zod schemas; every type is z.infer of one
-  lib/          dates, list logic, error reporting, navigation
-  i18n/         en.ts, the only place user-facing strings live
-  styles/       tokens.css (colour, radius, shadow, motion), globals.css
-tests/          unit, contract, e2e, a11y
-docs/           audit, traceability, ADRs
-```
-
-Key decisions, each with an ADR in [docs/adr](docs/adr/README.md): the service
-seam, TanStack Query, URL state, Radix primitives, nonce CSP, keeping the mock
-login, the scenario switcher, and where this build deviates from the Pack.
-
-## How to add a screen
-
-1. **Schema.** Add or extend the Zod schema in `src/schemas/index.ts`; export the type with `z.infer`.
-2. **Service.** Add the method to the interface in `src/services/types.ts`, then implement it in `src/adapters/mock/services.ts` (parse the response with the schema). Add a contract test in `tests/contract`.
-3. **Hook.** Add a query hook in `src/features/data/hooks.ts`.
-4. **Feature.** Create `src/features/<name>/` with a `<Name>View.tsx` (under 200 lines). Wrap each dynamic region in `RegionState` so it gets loading, empty, no-results and error states for free.
-5. **Strings.** Add every user-facing string to `src/i18n/en.ts`; the linter rejects literal JSX text.
-6. **Route.** Add `src/app/(app)/<name>/page.tsx` that renders the view, and a link in `src/layout/nav.ts`.
-7. **Tests.** Name each test starting with a `TC-###`; add an e2e case per scenario that matters and an axe case in `tests/a11y`.
-8. Run `npm run gate`.
-
-## Quality gate
-
-Every figure below is from a command run on this machine (Node 22, Chromium and Firefox from Playwright) on 2026-09-22. `npm run gate` is **green**: every step passes.
-
-| Command | Result | Figures |
-| --- | --- | --- |
-| `npm run typecheck` | **Pass** | 0 errors |
-| `npm run lint` | **Pass** | ESLint 0 problems (`--max-warnings 0`), Prettier clean, no raw design values outside `tokens.css` |
-| `npm run check:no-js` | **Pass** | no JavaScript files, empty allowlist |
-| `npm test` | **Pass** | 15 files, 239 tests. Coverage: 90.96% lines, 86.78% statements, 88.75% functions, 92.47% branches (threshold 80%) |
-| `npm run test:e2e` | **Pass** | Chromium and Firefox: 144 passed, 0 failed, 6 skipped (the same JS-budget test, which only runs in Chromium). Interaction latency (`@perf`, 4x throttled CPU, run alone): worst interaction 120 ms against a 200 ms budget. It is sensitive to machine load: an earlier run with a stray headless Chrome eating CPU measured 264 ms and failed; run it alone with `npx playwright test tests/e2e --grep @perf --project=perf` if in doubt |
-| `npm run test:a11y` | **Pass** | 94 of 94: axe (WCAG 2.2 AA tags) found 0 violations across every route, both themes and all nine scenarios, plus the dialog, drawer, menu, toast and 404 |
-| `npm run lighthouse` | **Pass** | Median of 3 runs, mobile profile: performance 99 (`/`), 93 (`/projects`), 97 (`/tasks`), 99 (`/profile`), all at or above 90. Accessibility 96, best practices 100, SEO 100 everywhere. LCP 0.71 to 0.77 s (budget 2.5 s), CLS 0.002 to 0.038 (budget 0.1), Total Blocking Time 119 to 323 ms: all pass. This score is sensitive to machine load in the same way the interaction-latency figure is: an earlier run on a busier machine measured 78 to 86 (see ADR-017) |
-| `npm run audit` | **Pass** | `npm audit`: 0 vulnerabilities; secret scan: 191 files, 0 findings |
-| `npm run build` | **Pass** | production build, 0 warnings |
-
-**On NFR-04 (first-load JavaScript).** The Pack asks for 170 KB or less per route. This app's own screens measure 184 to 187 KB gzipped, and a page with almost none of this app's code already measures 179 KB, so 170 KB sat below what Next.js 16 and React 19 ship on their own. The budget was restated to 200 KB — the measured framework floor plus about 20 KB of headroom — rather than loosening what the test checks. The full reasoning, the measurements, what was already trimmed (293 KB down to 186 KB), and the options considered are in [ADR-017](docs/adr/ADR-017-first-load-javascript.md).
-
-**Not run.** WebKit (Safari) needs system libraries this machine lacks (`sudo playwright install-deps`); it runs in CI through `PW_WEBKIT=1`. Microsoft Edge was not run. The manual keyboard and screen-reader checklists (Pack sections 11 B to F) were not done by a person.
-
-## Security
-
-Nonce-based Content-Security-Policy, HSTS and the other required headers, defensive URL parsing, schema-validated API responses, an open-redirect guard, a secret scan and a dependency audit all run in the gate. The mock login is the one deliberate weakness ([ADR-010](docs/adr/ADR-010-mock-auth.md)). Details and how to report a problem: [SECURITY.md](SECURITY.md).
-
-## Accessibility
-
-axe-core runs on every route, in both themes and every scenario (94 checks, 0 violations). The app has a skip link, one `h1` per page with no skipped heading levels, labelled landmarks, a focus-trapping drawer, visible focus, 44 px touch targets on touch layouts, reduced-motion support, and status and priority that never rely on colour alone. Contrast ratios are computed from the design tokens in both themes by a unit test. A manual keyboard and screen-reader pass has not been done yet.
-
-## Roadmap
-
-| Task | Change | Status |
-| --- | --- | --- |
-| 1. Frontend | This repository | Built; two Pack budgets still open ([ADR-017](docs/adr/ADR-017-first-load-javascript.md)) |
-| 2. API | `adapters/http` against the FastAPI service; session in an HttpOnly cookie; same scenarios replayed against the API | Planned |
-| 3. Database | Pagination and server-side search; verify optimistic updates against real persistence | Planned |
-| 4. AI | Streaming, cancel and failure states added to the state matrix; model output rendered as plain text | Planned |
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md): branch naming, conventional commits, the definition of done, and the code rules the linter enforces.
-
-## Known limitations
-
-- **NFR-04 and the Lighthouse performance score are not met.** See the gate table and ADR-017.
-- **Safari and Edge are unverified.** Only Chromium and Firefox ran locally.
-- **Authentication is a mock.** Accounts and plain-text passwords live in `localStorage`, and the session is an unsigned cookie the route guard only checks for presence (ADR-010). It exists to demonstrate guarded routes. Do not enter a real password.
-- **No Settings page.** Avatar upload, password change and account deletion from the baseline were removed to stay inside the Pack (ADR-013); the mock adapter still implements them.
-- **The CSP carries one relaxation** (`style-src` accepts a per-request nonce, because Radix's scroll lock injects a style tag), recorded in ADR-011.
-- **Mock data resets on reload.** Projects and tasks are in memory by design; nothing but the mock accounts and the theme choice touches browser storage.
-- **Lighthouse numbers are lab numbers** and vary with the machine; the script reports the median of three runs after a warm-up.
-- **The scenario switcher ships in production builds** so reviewers can reach every state (ADR-009).
-- **The task list renders 24 cards at a time** with a Show more button, to keep the 500-task scenario responsive.
-
-## Documents
-
-- [docs/audit.md](docs/audit.md): what the baseline had and what changed
-- [docs/traceability.md](docs/traceability.md): every FR and NFR with its tests
-- [docs/adr/](docs/adr/README.md): decisions and deviations
-- [DEMO_SCRIPT.md](DEMO_SCRIPT.md) and [docs/linkedin-post.md](docs/linkedin-post.md)
-
-## Licence and fonts
-
-Inter (variable, Latin subset) is self-hosted under the SIL Open Font License; the licence is in `src/app/fonts/`.
+Run `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, `npm run test:a11y`, or `npm run gate`. See [DEMO_SCRIPT.md](DEMO_SCRIPT.md), [SECURITY.md](SECURITY.md), [docs/traceability.md](docs/traceability.md), and [docs/adr/README.md](docs/adr/README.md) for usage, requirements and design decisions.
