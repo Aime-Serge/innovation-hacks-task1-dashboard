@@ -16,12 +16,12 @@ type AvatarProps = {
 
 /**
  * The person's photo when they have one, otherwise their initials. Decorative either way: the
- * name is always shown in text next to it. A plain `<img>`, not `next/image` (ADR-018): the
- * source can be a `data:` URL (an uploaded file, once stored), a `blob:` object URL (that same
- * file previewed before it is stored), or any host a person pasted a link to — none of which the
- * image optimizer can pre-configure for, and `blob:` sources fail its own URL parsing outright.
- * A photo that fails to load (a dead link, an offline network) falls back to initials rather
- * than a broken-image icon.
+ * name is always shown in text next to it. A plain `<img>`, not `next/image` (ADR-426, mirroring
+ * Task 1's ADR-018): the source is an https link or an uploaded photo already read to a `data:`
+ * URL, and next/image's optimizer cannot be pre-configured for either — a link's host is not
+ * known in advance, and a `data:` source is not a remote asset to optimize at all. A photo that
+ * fails to load (a dead link, a corrupt upload) falls back to initials instead of a broken-image
+ * icon.
  */
 export function Avatar({ name, avatarUrl, size = "md" }: AvatarProps) {
   const [failed, setFailed] = useState(false);
@@ -36,7 +36,7 @@ export function Avatar({ name, avatarUrl, size = "md" }: AvatarProps) {
       )}
     >
       {showImage ? (
-        // eslint-disable-next-line @next/next/no-img-element -- ADR-018: blob:/data: sources.
+        // eslint-disable-next-line @next/next/no-img-element -- ADR-426: https/data: sources.
         <img
           src={avatarUrl}
           alt=""

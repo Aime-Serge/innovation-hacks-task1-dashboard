@@ -1,37 +1,44 @@
-import type { Role, User } from "@/schemas";
+import type { ProfileDraft, Role, User } from "@/schemas";
 
-/** A photo to upload, or a link to an image already hosted elsewhere. */
-export type AvatarInput = { kind: "file"; file: File } | { kind: "url"; url: string };
+// MF-01, S-A: registration step 1 (account) and step 2 (professional details and consent),
+// checked one at a time by POST /users/validate before the final POST /users.
+export type RegistrationStep1 = Partial<{
+  givenName: string;
+  familyName: string;
+  email: string;
+  password: string;
+}>;
+export type RegistrationStep2 = Partial<{
+  profile: Partial<ProfileDraft>;
+  termsAccepted: boolean;
+  ageConfirmed: boolean;
+}>;
+export type RegistrationCheck =
+  ({ step: 1 } & RegistrationStep1) | ({ step: 2 } & RegistrationStep2);
 
-/** The complete professional block used by the Task 4 registration flow. */
-export type RegistrationProfile = {
-  discipline: string;
-  seniority: string;
-  employmentStatus: string;
-  companyName?: string;
-  jobTitle?: string;
-  country: string;
-  city?: string;
-  timeZone: string;
+export type RegisterInput = {
+  givenName: string;
+  familyName: string;
+  email: string;
+  password: string;
+  profile: ProfileDraft;
   termsAccepted: true;
   ageConfirmed: true;
+  /** ADR-426: an https link, or an uploaded photo read straight to a `data:` URL. Optional; the
+   * initials avatar is used when it is omitted. */
+  avatarUrl?: string | null;
+  /** RF-02: chosen in the role dialog. Omitted defaults to developer server-side (RF-03). */
+  role?: Role;
 };
 
 /** Session and account management. Mocked in Task 1; the real API in Task 4. */
 export interface AuthService {
   getSession(): Promise<User | null>;
   login(email: string, password: string): Promise<User>;
-  /** Creates the account only: registering never starts a session. `avatar` is optional;
-   * the initials avatar is used when it is omitted. `role` defaults to "developer" when
-   * omitted (the registration wizard always asks, but seeded/legacy callers may not). */
-  register(
-    name: string,
-    email: string,
-    password: string,
-    avatar?: AvatarInput,
-    profile?: RegistrationProfile,
-    role?: Role,
-  ): Promise<User>;
+  /** Checks one registration step and creates nothing (MF-01). Throws on a 422, with per-field details. */
+  validateRegistration(check: RegistrationCheck): Promise<void>;
+  /** Creates the account only: registering never starts a session (the caller then calls login). */
+  register(input: RegisterInput): Promise<User>;
   logout(): Promise<void>;
   forgotPassword(email: string): Promise<{ devResetUrl: string | null }>;
   resetPassword(token: string, newPassword: string): Promise<void>;

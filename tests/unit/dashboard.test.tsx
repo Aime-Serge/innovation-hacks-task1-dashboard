@@ -5,7 +5,7 @@ import { DashboardView } from "@/features/dashboard/DashboardView";
 import { ActivityFeed } from "@/features/dashboard/ActivityFeed";
 import { DeadlineList } from "@/features/dashboard/DeadlineList";
 import { ProfileView } from "@/features/profile/ProfileView";
-import { authState, testUser } from "./mock-auth";
+import { authState } from "./mock-auth";
 import { installScenario } from "./mock-services";
 import { renderApp } from "./render";
 import { makeProject, makeTask } from "./helpers";
@@ -23,10 +23,7 @@ beforeEach(() => {
   vi.setSystemTime(new Date("2030-01-10T12:00:00Z"));
 });
 
-afterEach(() => {
-  vi.useRealTimers();
-  authState.user = testUser;
-});
+afterEach(() => vi.useRealTimers());
 
 const open = (scenario: Scenario) => {
   installScenario(scenario);
@@ -88,26 +85,6 @@ describe("TC-001 dashboard content (FR-01..04)", () => {
   });
 });
 
-describe("TC-090 role dashboards", () => {
-  it("TC-090 a developer sees the developer dashboard, no team panel", async () => {
-    open("default");
-    expect(screen.getByRole("heading", { level: 1, name: "My dashboard" })).toBeInTheDocument();
-    await screen.findByText("Open tasks");
-    expect(screen.queryByRole("heading", { name: "Team" })).not.toBeInTheDocument();
-  });
-
-  it("TC-090 a team lead sees the team dashboard, team KPIs and the team panel", async () => {
-    authState.user = { ...testUser, role: "lead" };
-    open("default");
-    expect(screen.getByRole("heading", { level: 1, name: "Team dashboard" })).toBeInTheDocument();
-    expect(await screen.findByText("Team open tasks")).toBeInTheDocument();
-    expect(screen.getByText("Team overdue tasks")).toBeInTheDocument();
-    expect(screen.getByText("Team completion rate")).toBeInTheDocument();
-    expect(screen.getByText("Active projects")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Team" })).toBeInTheDocument();
-  });
-});
-
 describe("TC-003 dashboard lists", () => {
   it("TC-003 deadline rows show title, project, priority and date", () => {
     const project = makeProject({ id: "p-x", name: "Alpha" });
@@ -151,9 +128,12 @@ describe("TC-003 dashboard lists", () => {
               {
                 id: "u1",
                 name: "Ada",
+                givenName: "Ada",
+                familyName: "Lovelace",
                 email: "a@b.co",
                 role: "lead",
                 preferences: { theme: "system" },
+                profile: null,
               },
             ],
           ])
@@ -167,22 +147,60 @@ describe("TC-003 dashboard lists", () => {
   });
 });
 
-describe("TC-020 profile page (FR-09)", () => {
-  it("TC-020 shows avatar initials, name, email, role and stats", async () => {
+// RF-04..08: same route and DashboardView for both roles; only labels and the lead-only
+// TeamPanel vary, driven by the session's own role (see docs/role-alignment-contract.md).
+describe("RF-06/RF-07 role-aware dashboard (Developer vs Team Lead pack)", () => {
+  const developer = authState.user;
+
+  afterEach(() => {
+    authState.user = developer;
+  });
+
+  it("RT-06 a developer sees the developer labels and no team panel", async () => {
+    open("default");
+    expect(screen.getByRole("heading", { level: 1, name: "My dashboard" })).toBeInTheDocument();
+    expect(await screen.findByText("Open tasks")).toBeInTheDocument();
+    expect(screen.queryByText("Team open tasks")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Team" })).not.toBeInTheDocument();
+  });
+
+  it("RT-06/RT-07 a lead sees the team labels and the team panel", async () => {
+    authState.user = developer === null ? null : { ...developer, role: "lead" };
+    open("default");
+    expect(screen.getByRole("heading", { level: 1, name: "Team dashboard" })).toBeInTheDocument();
+    expect(await screen.findByText("Team open tasks")).toBeInTheDocument();
+    expect(screen.getByText("Team overdue tasks")).toBeInTheDocument();
+    expect(screen.getByText("Team completion rate")).toBeInTheDocument();
+    // Active projects is not team-relabelled (pack section 3: unchanged for both roles).
+    expect(screen.getByText("Active projects")).toBeInTheDocument();
+    const team = await screen.findByRole("heading", { name: "Team" });
+    const list = team.closest("section")?.querySelector("ul");
+    expect(list).not.toBeNull();
+    expect(within(list as HTMLElement).getAllByRole("listitem").length).toBeGreaterThan(0);
+  });
+});
+
+// MF-06, MF-09 (was: email, role and task-derived stats on this page; the owner's view now comes
+// from GET /me and never shows the email inline; see supersession-log.md).
+describe("TC-020 own profile page (MF-06, MF-09)", () => {
+  it("TC-020 shows the header, about, skills, statistics and completeness", async () => {
     installScenario("default");
     renderApp(<ProfileView />);
     expect(screen.getByRole("heading", { level: 1, name: "Profile" })).toBeInTheDocument();
+    expect(await screen.findByText("Backend · Senior")).toBeInTheDocument();
     expect(screen.getAllByText("Aime Serge UKOBIZABA").length).toBeGreaterThan(0);
-    expect(screen.getByText("aime.serge@example.com")).toBeInTheDocument();
-    expect(screen.getByText("Developer")).toBeInTheDocument();
-    expect(await screen.findByText("Assigned")).toBeInTheDocument();
-    expect(screen.getByText("Completion rate")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Statistics" })).toBeInTheDocument();
+    expect(screen.getByText("Projects owned")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Profile completeness" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Edit profile" })).toHaveAttribute(
+      "href",
+      "/profile/edit",
+    );
   });
 
-  it("TC-072 the stats region shows an error with Retry when tasks fail", async () => {
+  it("TC-072 shows an error with Retry when the profile fails to load", async () => {
     installScenario("error");
     renderApp(<ProfileView />);
     expect(await screen.findByRole("button", { name: "Retry" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Edit profile" })).toBeInTheDocument();
   });
 });

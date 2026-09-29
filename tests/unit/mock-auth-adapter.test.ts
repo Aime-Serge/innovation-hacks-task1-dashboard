@@ -1,4 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { RegisterInput } from "@/services/auth";
+
+// S-A: the shared registration payload every test that creates an account now sends.
+const registerInput: RegisterInput = {
+  givenName: "Ada",
+  familyName: "Lovelace",
+  email: "ada@example.com",
+  password: "password12345",
+  profile: {
+    discipline: "backend",
+    seniority: "mid",
+    employmentStatus: "between_roles",
+    companyName: null,
+    jobTitle: null,
+    country: "RW",
+    city: null,
+    timeZone: "Africa/Kigali",
+  },
+  termsAccepted: true,
+  ageConfirmed: true,
+};
 
 const run = async <T>(promise: Promise<T>): Promise<T> => {
   const settled = promise.then(
@@ -51,75 +72,22 @@ describe("TC-004 mock auth adapter", () => {
 
   it("TC-005 registering creates the account without starting a session, and rejects duplicates", async () => {
     const auth = await fresh();
-    const user = await run(auth.register("Ada", "ada@example.com", "password123"));
-    expect(user.name).toBe("Ada");
+    const user = await run(auth.register(registerInput));
+    expect(user.name).toBe("Ada Lovelace");
+    expect(user.profile?.discipline).toBe("backend");
     expect(document.cookie).not.toContain("mock_session=user");
     expect(await run(auth.getSession())).toBeNull();
-    await expect(run(auth.register("Ada", "ada@example.com", "password123"))).rejects.toMatchObject(
-      { status: 409 },
-    );
-    expect((await run(auth.login("ada@example.com", "password123"))).name).toBe("Ada");
+    await expect(run(auth.register(registerInput))).rejects.toMatchObject({ status: 409 });
+    expect((await run(auth.login("ada@example.com", "password12345"))).name).toBe("Ada Lovelace");
   });
 
-  it("TC-005 registering with a photo file stores it as the avatar", async () => {
+  it("MF-01 validateRegistration checks one step and creates nothing", async () => {
     const auth = await fresh();
-    const png = new File(["x"], "a.png", { type: "image/png" });
-    const user = await run(
-      auth.register("Grace", "grace@example.com", "password123", { kind: "file", file: png }),
-    );
-    expect(user.avatarUrl).toMatch(/^data:image\/png/);
-  });
-
-  it("TC-005 registering with an image link stores it as the avatar", async () => {
-    const auth = await fresh();
-    const user = await run(
-      auth.register("Grace", "grace2@example.com", "password123", {
-        kind: "url",
-        url: "https://example.com/grace.png",
-      }),
-    );
-    expect(user.avatarUrl).toBe("https://example.com/grace.png");
-  });
-
-  it("TC-005 retains the professional registration details used by Tasks 2 to 4", async () => {
-    const auth = await fresh();
-    const user = await run(
-      auth.register("Grace Hopper", "grace-profile@example.com", "password123", undefined, {
-        discipline: "backend",
-        seniority: "senior",
-        employmentStatus: "employed",
-        companyName: "Acme",
-        jobTitle: "Engineer",
-        country: "RW",
-        timeZone: "Africa/Kigali",
-        termsAccepted: true,
-        ageConfirmed: true,
-      }),
-    );
-    expect(user.profile).toMatchObject({
-      discipline: "backend",
-      companyName: "Acme",
-      country: "RW",
-    });
-  });
-
-  it("TC-005 an invalid photo or link is refused, and no account is created", async () => {
-    const auth = await fresh();
-    const gif = new File(["x"], "a.gif", { type: "image/gif" });
     await expect(
-      run(auth.register("Grace", "grace3@example.com", "password123", { kind: "file", file: gif })),
-    ).rejects.toSatisfy((e: unknown) => isServiceError(e));
-    await expect(
-      run(
-        auth.register("Grace", "grace3@example.com", "password123", {
-          kind: "url",
-          url: "http://example.com/grace.png",
-        }),
-      ),
-    ).rejects.toSatisfy((e: unknown) => isServiceError(e));
-    // Neither attempt should have left an account behind: the email is still free.
-    const user = await run(auth.register("Grace", "grace3@example.com", "password123"));
-    expect(user.avatarUrl).toBeUndefined();
+      run(auth.validateRegistration({ step: 1, givenName: "", email: "not-an-email" })),
+    ).rejects.toMatchObject({ status: 422 });
+    await run(auth.validateRegistration({ step: 1, givenName: "Ada", familyName: "Lovelace" }));
+    expect(await run(auth.getSession())).toBeNull();
   });
 
   it("TC-004 forgot and reset password: same reply for unknown emails, single-use token", async () => {

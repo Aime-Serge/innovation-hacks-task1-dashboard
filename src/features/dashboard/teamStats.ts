@@ -1,31 +1,21 @@
 import { isOverdue } from "@/lib/dates";
 import type { Task, User } from "@/schemas";
 
-export type TeamMemberStats = {
-  userId: string;
-  name: string;
-  openTasks: number;
-  overdueTasks: number;
-};
+export type TeamMemberStats = { user: User; openTasks: number; overdueTasks: number };
 
-/**
- * Groups tasks already fetched by the dashboard by `assigneeId`, one row per
- * user. No new query: both `tasks` and `users` come from the dashboard's own
- * existing queries (FR: a team lead's roll-up must never cost a developer an
- * extra fetch).
- */
-export function teamStats(
-  tasks: readonly Task[],
+/** RF-07: per-member counts for the lead-only team panel, derived from the dashboard's
+ * already-fetched, already role-scoped task and user lists (BR-401) — no new request. */
+export function computeTeamStats(
   users: readonly User[],
+  tasks: readonly Task[],
   today: string,
 ): TeamMemberStats[] {
   return users.map((user) => {
-    const assigned = tasks.filter((task) => task.assigneeId === user.id);
+    const own = tasks.filter((task) => task.assigneeId === user.id);
     return {
-      userId: user.id,
-      name: user.name,
-      openTasks: assigned.filter((task) => task.status !== "done").length,
-      overdueTasks: assigned.filter((task) => isOverdue(task, today)).length,
+      user,
+      openTasks: own.filter((task) => task.status !== "done").length,
+      overdueTasks: own.filter((task) => isOverdue(task, today)).length,
     };
   });
 }
