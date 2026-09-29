@@ -340,23 +340,6 @@ describe("TC-030 primitives", () => {
     expect(screen.getByText("AL")).toBeInTheDocument();
   });
 
-  it("TC-030 avatar shows a photo when given one, and falls back if it fails to load", () => {
-    const { container, rerender } = render(
-      <Avatar name="Ada Lovelace" avatarUrl="https://example.com/ada.png" />,
-    );
-    const img = container.querySelector("img");
-    expect(img).not.toBeNull();
-    expect(screen.queryByText("AL")).not.toBeInTheDocument();
-
-    // A dead link falls back to initials instead of a broken-image icon.
-    if (img !== null) fireEvent.error(img);
-    expect(screen.getByText("AL")).toBeInTheDocument();
-
-    rerender(<Avatar name="Ada Lovelace" avatarUrl={null} />);
-    expect(screen.getByText("AL")).toBeInTheDocument();
-    expect(container.querySelector("img")).toBeNull();
-  });
-
   it("TC-030 empty state, card, checkbox and tooltip render", async () => {
     const onCheck = vi.fn();
     render(

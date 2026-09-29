@@ -1,11 +1,13 @@
 import { memo } from "react";
 import { formatDate, isOverdue, todayIso } from "@/lib/dates";
+import { statusChoices } from "@/lib/workflow";
 import { t } from "@/i18n";
 import { TaskStatus, type Task } from "@/schemas";
 import { Avatar } from "@/ui/Avatar";
 import { Badge } from "@/ui/Badge";
 import { Card } from "@/ui/Card";
 import { Icon } from "@/ui/Icon";
+import { IconButton } from "@/ui/IconButton";
 import { Select } from "@/ui/Input";
 import { PriorityBadge } from "../shared/badges";
 
@@ -13,7 +15,11 @@ type TaskCardProps = {
   task: Task;
   projectName: string | undefined;
   assigneeName: string | undefined;
+  /** Kept beside the name so a registration photo follows the assignee into task views. */
+  assigneeAvatarUrl?: string | null | undefined;
   onStatusChange: (id: string, status: TaskStatus) => void;
+  /** Present only when the person may delete this task (BR-203). */
+  onDelete?: (task: Task) => void;
   /** Headings never skip a level: h2 under the page's h1, h3 under a section's h2. */
   headingLevel?: "h2" | "h3";
 };
@@ -28,7 +34,9 @@ export const TaskCard = memo(function TaskCard({
   task,
   projectName,
   assigneeName,
+  assigneeAvatarUrl,
   onStatusChange,
+  onDelete,
   headingLevel: Heading = "h2",
 }: TaskCardProps) {
   const overdue = isOverdue(task, todayIso());
@@ -64,14 +72,14 @@ export const TaskCard = memo(function TaskCard({
           <span className="text-muted">{t("task.unassigned")}</span>
         ) : (
           <>
-            <Avatar name={assigneeName} size="sm" />
+            <Avatar name={assigneeName} avatarUrl={assigneeAvatarUrl} size="sm" />
             <span className="truncate" title={assigneeName}>
               {assigneeName}
             </span>
           </>
         )}
       </div>
-      <div>
+      <div className="flex items-center gap-2">
         <label htmlFor={`status-${task.id}`} className="sr-only">
           {t("task.changeStatus", { title: task.title })}
         </label>
@@ -80,12 +88,20 @@ export const TaskCard = memo(function TaskCard({
           value={task.status}
           onChange={(event) => onStatusChange(task.id, TaskStatus.parse(event.target.value))}
         >
-          {TaskStatus.options.map((status) => (
+          {statusChoices(task.status).map((status) => (
             <option key={status} value={status}>
               {t(`taskStatus.${status}`)}
             </option>
           ))}
         </Select>
+        {onDelete !== undefined && (
+          <IconButton
+            label={t("task.delete.label", { title: task.title })}
+            onClick={() => onDelete(task)}
+          >
+            <Icon name="trash" />
+          </IconButton>
+        )}
       </div>
     </Card>
   );

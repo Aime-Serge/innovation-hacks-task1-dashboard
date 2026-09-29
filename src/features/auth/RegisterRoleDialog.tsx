@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { t } from "@/i18n";
+import { cn } from "@/lib/cn";
 import type { Role } from "@/schemas";
 import { Button } from "@/ui/Button";
 import { Dialog } from "@/ui/Dialog";
@@ -13,68 +14,71 @@ type Props = {
   onConfirm: (role: Role) => void;
 };
 
-const OPTIONS: { role: Role; label: string; description: string }[] = [
+const OPTIONS = [
   {
-    role: "developer",
-    label: t("auth.roleDialog.developer.label"),
-    description: t("auth.roleDialog.developer.description"),
+    role: "developer" as const,
+    labelKey: "auth.roleDialog.developer.label" as const,
+    descriptionKey: "auth.roleDialog.developer.description" as const,
   },
   {
-    role: "lead",
-    label: t("auth.roleDialog.lead.label"),
-    description: t("auth.roleDialog.lead.description"),
+    role: "lead" as const,
+    labelKey: "auth.roleDialog.lead.label" as const,
+    descriptionKey: "auth.roleDialog.lead.description" as const,
   },
 ];
 
-/**
- * Shown after the registration wizard's last step. Cancel closes without
- * resetting the choice (no useEffect needed: the selection simply survives
- * until the dialog is confirmed or the form itself unmounts).
- */
+/** RF-01: shown after the account and professional-details steps. Nothing is pre-selected, and
+ * Create account stays disabled until one option is chosen. Canceling (or Escape, handled by
+ * the Dialog primitive) leaves the registration form exactly as it was — this dialog only ever
+ * reads a role choice, it never submits anything on its own. */
 export function RegisterRoleDialog({ open, onOpenChange, busy, onConfirm }: Props) {
-  const [role, setRole] = useState<Role | null>(null);
+  // Starts unset (RF-01's "no default"); reopening after Cancel keeps the last pick rather
+  // than forcing a re-choice, which needs no effect and nothing to reset.
+  const [choice, setChoice] = useState<Role | null>(null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} title={t("auth.roleDialog.title")}>
-      <fieldset className="flex flex-col gap-3">
-        {OPTIONS.map((option) => (
-          <label
-            key={option.role}
-            htmlFor={`register-role-${option.role}`}
-            className="flex cursor-pointer items-start gap-3 rounded-md border border-line-strong p-3 has-[:checked]:border-accent"
-          >
-            <input
-              id={`register-role-${option.role}`}
-              type="radio"
-              name="role"
-              value={option.role}
-              checked={role === option.role}
-              onChange={() => setRole(option.role)}
-              aria-label={option.label}
-              className="mt-1"
-            />
-            <span className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-sm font-medium text-fg">{option.label}</span>
-              <span className="text-sm text-muted">{option.description}</span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-      <p className="mt-3 text-sm text-muted">{t("auth.roleDialog.changeLater")}</p>
-      <div className="mt-4 flex justify-end gap-2">
-        <Button type="button" onClick={() => onOpenChange(false)} disabled={busy}>
-          {t("common.cancel")}
-        </Button>
-        <Button
-          type="button"
-          variant="primary"
-          disabled={role === null || busy}
-          onClick={() => {
-            if (role !== null) onConfirm(role);
-          }}
+      <div className="flex flex-col gap-4">
+        <div
+          role="radiogroup"
+          aria-label={t("auth.roleDialog.title")}
+          className="flex flex-col gap-3"
         >
-          {busy ? t("auth.creating") : t("auth.createAccount")}
-        </Button>
+          {OPTIONS.map(({ role, labelKey, descriptionKey }) => (
+            <label
+              key={role}
+              className={cn(
+                "flex cursor-pointer items-start gap-3 rounded-md border p-3",
+                choice === role ? "border-accent" : "border-line",
+              )}
+            >
+              <input
+                type="radio"
+                name="register-role"
+                value={role}
+                checked={choice === role}
+                onChange={() => setChoice(role)}
+                aria-label={t(labelKey)}
+                className="mt-1"
+              />
+              <span>
+                <span className="block font-medium">{t(labelKey)}</span>
+                <span className="block text-sm text-muted">{t(descriptionKey)}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="text-sm text-muted">{t("auth.roleDialog.changeLater")}</p>
+        <div className="flex justify-end gap-2">
+          <Button onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
+          <Button
+            variant="primary"
+            disabled={choice === null || busy}
+            onClick={() => choice !== null && onConfirm(choice)}
+          >
+            {busy ? t("auth.creating") : t("auth.createAccount")}
+          </Button>
+        </div>
       </div>
     </Dialog>
   );
