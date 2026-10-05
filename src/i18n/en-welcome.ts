@@ -11,7 +11,7 @@ export const enWelcome = {
   "welcome.feature.projects.body": "Progress, deadlines and owners on a single dashboard.",
   "welcome.feature.tasks.title": "Tasks your team can follow",
   "welcome.feature.tasks.body": "Assign work, move it through its statuses, and spot what is late.",
-  "welcome.footer": "Built for the Innovation Hacks Full Stack Development track.",
+  "welcome.footer": "Part of the Innovation Hacks Full Stack Development Internship.",
   "auth.welcomeBack": "Welcome back",
   "auth.welcomeBackLead": "Log in to pick up where you left off.",
   "auth.home": "DevDash home",

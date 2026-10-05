@@ -34,50 +34,59 @@ function ExternalList({ items }: { items: typeof RESOURCES }) {
 }
 
 /** A server component: the footer adds no client JavaScript (NFR-04). */
-export function Footer() {
+export function Footer({ variant = "full" }: { variant?: "full" | "compact" } = {}) {
   return (
     <footer aria-label={t("footer.label")} className="border-t border-line bg-surface">
       <div className="brand-bar" />
-      <div className="mx-auto grid w-full max-w-(--content-max) gap-8 px-4 py-8 text-sm text-muted sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
-        <div className="flex flex-col gap-2">
-          <p className="text-lg font-semibold text-fg">{t("app.name")}</p>
-          <p>{t("footer.tagline")}</p>
-          <p>{t("footer.builtFor")}</p>
-        </div>
-        <nav aria-labelledby="footer-product">
-          <h2 id="footer-product" className="mb-2 font-semibold text-fg">
-            {t("footer.product")}
-          </h2>
-          <ul className="flex flex-col">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href} className={LINK}>
-                  {t(item.label)}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <nav aria-labelledby="footer-resources">
-          <h2 id="footer-resources" className="mb-2 font-semibold text-fg">
-            {t("footer.resources")}
-          </h2>
-          <ExternalList items={RESOURCES} />
-        </nav>
-        <nav aria-labelledby="footer-project">
-          <h2 id="footer-project" className="mb-2 font-semibold text-fg">
-            {t("footer.project")}
-          </h2>
-          <ExternalList items={PROJECT} />
-        </nav>
-      </div>
-      <div className="border-t border-line">
+      {variant === "compact" ? (
         <div className="mx-auto flex w-full max-w-(--content-max) flex-col gap-1 px-4 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
-          <p>{t("footer.status")}</p>
-          <p>{t("footer.fonts")}</p>
+          <p>{t("welcome.footer")}</p>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="mx-auto grid w-full max-w-(--content-max) gap-8 px-4 py-8 text-sm text-muted sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
+            <div className="flex flex-col gap-2">
+              <p className="text-lg font-semibold text-fg">{t("app.name")}</p>
+              <p>{t("footer.tagline")}</p>
+              <p>{t("footer.builtFor")}</p>
+            </div>
+            <nav aria-labelledby="footer-product">
+              <h2 id="footer-product" className="mb-2 font-semibold text-fg">
+                {t("footer.product")}
+              </h2>
+              <ul className="flex flex-col">
+                {NAV_ITEMS.map((item) => (
+                  <li key={item.href}>
+                    <Link href={item.href} className={LINK}>
+                      {t(item.label)}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <nav aria-labelledby="footer-resources">
+              <h2 id="footer-resources" className="mb-2 font-semibold text-fg">
+                {t("footer.resources")}
+              </h2>
+              <ExternalList items={RESOURCES} />
+            </nav>
+            <nav aria-labelledby="footer-project">
+              <h2 id="footer-project" className="mb-2 font-semibold text-fg">
+                {t("footer.project")}
+              </h2>
+              <ExternalList items={PROJECT} />
+            </nav>
+          </div>
+          <div className="border-t border-line">
+            <div className="mx-auto flex w-full max-w-(--content-max) flex-col gap-1 px-4 py-4 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <p>{t("footer.copyright", { year: new Date().getFullYear() })}</p>
+              <p>{t("footer.status")}</p>
+              <p>{t("footer.fonts")}</p>
+            </div>
+          </div>
+        </>
+      )}
     </footer>
   );
 }

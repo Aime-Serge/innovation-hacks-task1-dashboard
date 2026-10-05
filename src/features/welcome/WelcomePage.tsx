@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { t, type MessageKey } from "@/i18n";
+import { Footer } from "@/layout/Footer";
 import { Card } from "@/ui/Card";
 import { Icon, type IconName } from "@/ui/Icon";
 
@@ -48,10 +49,7 @@ export function WelcomePage() {
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{t("welcome.title")}</h1>
           <p className="max-w-xl text-lg text-muted">{t("welcome.lead")}</p>
           <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
-            <Link
-              href="/login"
-              className={`${CTA} bg-accent text-on-accent hover:bg-accent-hover`}
-            >
+            <Link href="/login" className={`${CTA} bg-accent text-on-accent hover:bg-accent-hover`}>
               {t("welcome.register")}
             </Link>
           </div>
@@ -78,11 +76,7 @@ export function WelcomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-line bg-surface">
-        <p className="mx-auto w-full max-w-(--content-max) px-4 py-4 text-center text-xs text-muted sm:px-6">
-          {t("welcome.footer")}
-        </p>
-      </footer>
+      <Footer variant="compact" />
     </div>
   );
 }
