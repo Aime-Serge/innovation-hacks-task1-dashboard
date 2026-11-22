@@ -57,7 +57,7 @@ For frontend-only exploration, set `NEXT_PUBLIC_DATA_SOURCE=mock` in `.env.local
 | `/settings` | Account, privacy and preference settings |
 | `/login`, `/register` | Sign in and register |
 
-## Architecture
+Run checks individually with `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:e2e`, and `npm run test:a11y`. `npm run gate` runs the full project gate. None of those results are claimed by this README; attach the output captured from the submission commit when preparing the release.
 
 The Next.js App Router contains the screens and same-origin `/api/bff` route. Features depend on typed service contracts. `src/adapters/http` calls the API through the server layer; `src/adapters/mock` supports local demos and scenarios. Schemas validate service responses, and shared UI components provide accessible forms, dialogs, menus and feedback states.
 
