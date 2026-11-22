@@ -12,28 +12,28 @@ describe("the public front door", () => {
       screen.getByRole("heading", { level: 1, name: "Welcome to DevDash" }),
     ).toBeInTheDocument();
     const main = screen.getByRole("main");
-    // Both welcome actions open login; registration is available from that screen.
+    // Log in sits in the header only; the hero's single button is the sign-up invitation.
     expect(
-      within(screen.getByRole("banner")).getByRole("link", { name: "Login" }),
+      within(screen.getByRole("banner")).getByRole("link", { name: "Log in" }),
     ).toHaveAttribute("href", "/login");
-    expect(within(main).queryByRole("link", { name: "Login" })).toBeNull();
-    expect(within(main).getByRole("link", { name: "Join" })).toHaveAttribute(
+    expect(within(main).queryByRole("link", { name: "Log in" })).toBeNull();
+    expect(within(main).getByRole("link", { name: "Join Us" })).toHaveAttribute(
       "href",
-      "/login",
+      "/register",
     );
-    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(2);
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(3);
   });
 
-  it("keeps Login in the header and Join in the main section", () => {
-    render(<WelcomePage />);
-    expect(within(screen.getByRole("banner")).getByRole("link", { name: "Login" })).toHaveAttribute(
+  it("a signed-in visitor is offered the dashboard instead of login and sign-up", () => {
+    render(<WelcomePage signedIn />);
+    expect(screen.getByRole("heading", { level: 1, name: "Welcome to DevDash" })).toBeVisible();
+    const main = screen.getByRole("main");
+    expect(within(main).getByRole("link", { name: "Go to your dashboard" })).toHaveAttribute(
       "href",
-      "/login",
+      "/dashboard",
     );
-    expect(within(screen.getByRole("main")).getByRole("link", { name: "Join" })).toHaveAttribute(
-      "href",
-      "/login",
-    );
+    expect(within(main).queryByRole("link", { name: "Log in" })).toBeNull();
+    expect(within(main).queryByRole("link", { name: "Join Us" })).toBeNull();
   });
 
   it("the login page welcomes the visitor back and links home", () => {

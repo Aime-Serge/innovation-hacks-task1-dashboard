@@ -19,8 +19,7 @@
     "generate:api": "openapi-typescript docs/api/openapi.json -o src/generated/api-types.ts",
     "generate:lists": "jiti scripts/generate-lists.ts",
     "check:api": "jiti scripts/check-api-types.ts",
-    "scan:bundle": "jiti scripts/bundle-scan.ts",
-    "screenshots": "jiti scripts/screenshots.ts"
+    "scan:bundle": "jiti scripts/bundle-scan.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "5.103.1",

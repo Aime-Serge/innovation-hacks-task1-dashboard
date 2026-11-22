@@ -10,12 +10,18 @@ const FEATURES: readonly { icon: IconName; title: MessageKey; body: MessageKey }
     body: "welcome.feature.projects.body",
   },
   { icon: "tasks", title: "welcome.feature.tasks.title", body: "welcome.feature.tasks.body" },
+  { icon: "sparkles", title: "welcome.feature.ai.title", body: "welcome.feature.ai.body" },
 ];
 
 const CTA = "touch-target inline-flex h-11 items-center justify-center rounded-md px-5 font-medium";
 
-/** The public front door at "/", with login in the header and registration as the main action. */
-export function WelcomePage() {
+/** The public front door at "/", seen first by everyone; a signed-in visitor is offered the dashboard. */
+export function WelcomePage({ signedIn = false }: { signedIn?: boolean }) {
+  // Log in lives in the header only; the hero's one button invites a new visitor to sign up.
+  const primary = signedIn
+    ? { href: "/dashboard", label: t("welcome.openDashboard") }
+    : { href: "/login", label: t("welcome.login") };
+  const hero = signedIn ? primary : { href: "/register", label: t("welcome.register") };
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="border-b border-line bg-surface">
@@ -31,10 +37,10 @@ export function WelcomePage() {
             {t("app.name")}
           </p>
           <Link
-            href="/login"
+            href={primary.href}
             className="touch-target inline-flex h-9 items-center rounded-md border border-line-strong px-3 text-sm font-medium hover:bg-subtle"
           >
-            {t("welcome.login")}
+            {primary.label}
           </Link>
         </div>
       </header>
@@ -49,10 +55,10 @@ export function WelcomePage() {
           <p className="max-w-xl text-lg text-muted">{t("welcome.lead")}</p>
           <div className="flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row">
             <Link
-              href="/login"
+              href={hero.href}
               className={`${CTA} bg-accent text-on-accent hover:bg-accent-hover`}
             >
-              {t("welcome.register")}
+              {hero.label}
             </Link>
           </div>
         </section>
@@ -64,7 +70,7 @@ export function WelcomePage() {
           <h2 id="welcome-features" className="sr-only">
             {t("welcome.features")}
           </h2>
-          <ul className="grid gap-4 sm:grid-cols-2">
+          <ul className="grid gap-4 sm:grid-cols-3">
             {FEATURES.map((feature) => (
               <li key={feature.title}>
                 <Card className="flex h-full flex-col gap-2 p-5">

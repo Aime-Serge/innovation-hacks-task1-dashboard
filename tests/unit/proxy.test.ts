@@ -24,11 +24,10 @@ describe("TC-004 route guard (proxy)", () => {
     expect(csp).not.toBe(second.headers.get("content-security-policy"));
   });
 
-  it("TC-004 keeps login and register accessible to signed-in users", () => {
-    expect(proxy(request("/login", true)).status).toBe(200);
-    expect(proxy(request("/login", true)).headers.get("location")).toBeNull();
-    expect(proxy(request("/register", true)).status).toBe(200);
-    expect(proxy(request("/register", true)).headers.get("location")).toBeNull();
+  it("TC-004 keeps login and register away from signed-in users", () => {
+    const dashboard = "http://localhost:3000/dashboard";
+    expect(proxy(request("/login", true)).headers.get("location")).toBe(dashboard);
+    expect(proxy(request("/register", true)).status).toBe(307);
   });
 
   it("TC-004 the welcome page at / is the front door for everyone, signed in or not", () => {
