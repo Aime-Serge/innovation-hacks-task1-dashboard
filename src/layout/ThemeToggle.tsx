@@ -1,21 +1,21 @@
 "use client";
 
 import { useTheme } from "@/providers/ThemeProvider";
+import { resolveTheme } from "@/providers/theme";
 import { t } from "@/i18n";
 import { Icon } from "@/ui/Icon";
 import { IconButton } from "@/ui/IconButton";
 
-/** Cycles system -> light -> dark; the label names the current choice. */
+/** Flips between light and dark from the header; the label names the theme it switches to. */
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
-  const icon = theme === "dark" ? "moon" : theme === "light" ? "sun" : "monitor";
+  const isDark = resolveTheme(theme) === "dark";
   return (
     <IconButton
-      label={t("theme.toggle", { current: t(`theme.${theme}`), next: t(`theme.${next}`) })}
-      onClick={() => setTheme(next)}
+      label={t(isDark ? "theme.switchToLight" : "theme.switchToDark")}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      <Icon name={icon} />
+      <Icon name={isDark ? "sun" : "moon"} />
     </IconButton>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { ServiceError } from "@/services/types";
 import { useState, type SyntheticEvent } from "react";
 import { t } from "@/i18n";
 import { formText } from "@/lib/form";
@@ -10,6 +11,7 @@ import { FormField } from "@/ui/FormField";
 import { Input, Select, Textarea } from "@/ui/Input";
 import { useSaveTask } from "../data/hooks";
 import { useToast } from "@/ui/Toast";
+import { PeoplePicker } from "./PeoplePicker";
 
 export type Props = {
   open: boolean;
@@ -24,6 +26,7 @@ type Errors = Partial<Record<"title" | "projectId", string>>;
 
 function TaskForm({ onOpenChange, task, projects, users, defaultProjectId }: Props) {
   const [errors, setErrors] = useState<Errors>({});
+  const [assigneeId, setAssigneeId] = useState<string | null>(task?.assigneeId ?? null);
   const toast = useToast();
   const save = useSaveTask(() => {
     toast.notify("success", t(task === null ? "task.created" : "task.saved"));
@@ -41,7 +44,7 @@ function TaskForm({ onOpenChange, task, projects, users, defaultProjectId }: Pro
       status: text("status"),
       priority: text("priority"),
       dueDate: text("dueDate") === "" ? null : text("dueDate"),
-      assigneeId: text("assigneeId") === "" ? null : text("assigneeId"),
+      assigneeId,
     });
     if (!parsed.success) {
       const fields = new Set(parsed.error.issues.map((issue) => issue.path[0]));
@@ -111,21 +114,21 @@ function TaskForm({ onOpenChange, task, projects, users, defaultProjectId }: Pro
           {(c) => <Input {...c} name="dueDate" type="date" defaultValue={task?.dueDate ?? ""} />}
         </FormField>
         <FormField id="task-assignee" label={t("task.form.assignee")}>
-          {(c) => (
-            <Select {...c} name="assigneeId" defaultValue={task?.assigneeId ?? ""}>
-              <option value="">{t("task.unassigned")}</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </Select>
+          {() => (
+            <PeoplePicker
+              id="task-assignee"
+              value={assigneeId}
+              knownUsers={users}
+              onChange={setAssigneeId}
+            />
           )}
         </FormField>
       </div>
       {save.isError && (
         <p role="alert" className="text-sm text-danger">
-          {t("form.saveFailed")}
+          {save.error instanceof ServiceError && save.error.code === "PROJECT_CLOSED"
+            ? t("task.projectClosed")
+            : t("form.saveFailed")}
         </p>
       )}
       <div className="flex justify-end gap-2">

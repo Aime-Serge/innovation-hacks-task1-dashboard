@@ -40,10 +40,15 @@ test.describe("TC-016 security headers (NFR-16, TH-06)", () => {
       // The app's own error reporter logs the expected update-fails failure; only
       // browser-raised problems (CSP violations, React warnings) count here.
       const reported = m.text().startsWith("[");
-      if ((m.type() === "error" || m.type() === "warning") && !reported) problems.push(m.text());
+      // WebKit logs Next's background link prefetches (?_rsc=) as errors when the
+      // page navigates away mid-flight. That is a cancelled request, not a policy violation.
+      const cancelledPrefetch =
+        m.text().includes("_rsc=") && m.text().includes("access control checks");
+      if ((m.type() === "error" || m.type() === "warning") && !reported && !cancelledPrefetch)
+        problems.push(m.text());
     });
     page.on("pageerror", (e) => problems.push(e.message));
-    for (const route of ["/", "/projects", "/projects/project-1", "/tasks", "/profile"]) {
+    for (const route of ["/dashboard", "/projects", "/projects/project-1", "/tasks", "/profile"]) {
       await visit(page, route);
       await settled(page);
     }
@@ -90,28 +95,51 @@ test.describe("TC-009 theme (FR-24)", () => {
           document.documentElement.dataset["theme"];
       });
     });
-    await page.goto("/");
+    await page.goto("/dashboard");
     expect(
       await page.evaluate(() => (window as unknown as { __firstTheme?: string }).__firstTheme),
     ).toBe("dark");
     await context.close();
   });
 
-  test("TC-009 the toggle cycles system, light and dark, and the choice survives a reload", async ({
+  test("TC-009 dark is the default even when the OS prefers light", async ({ browser }) => {
+    const context = await browser.newContext({ colorScheme: "light" });
+    await signIn(context);
+    const page = await context.newPage();
+    await page.goto("/dashboard");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+    await context.close();
+  });
+
+  test("TC-009 the header icon toggles light and dark, and the choice survives a reload", async ({
     page,
     context,
   }) => {
     await signIn(context);
     await page.setViewportSize({ width: 1280, height: 800 });
-    await visit(page, "/");
+    await visit(page, "/dashboard");
     const html = page.locator("html");
-    await page.getByRole("button", { name: /^Theme: System/ }).click();
+    await expect(html).toHaveAttribute("data-theme", "dark");
+    await page.getByRole("button", { name: "Switch to light theme" }).click();
     await expect(html).toHaveAttribute("data-theme", "light");
-    await page.getByRole("button", { name: /^Theme: Light/ }).click();
-    await expect(html).toHaveAttribute("data-theme", "dark");
     await page.reload();
+    await expect(html).toHaveAttribute("data-theme", "light");
+    await page.getByRole("button", { name: "Switch to dark theme" }).click();
     await expect(html).toHaveAttribute("data-theme", "dark");
-    await expect(page.getByRole("button", { name: /^Theme: Dark/ })).toBeVisible();
+  });
+
+  test("TC-012 the header spans the top and the sidebar starts beneath it", async ({
+    page,
+    context,
+  }) => {
+    await signIn(context);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await visit(page, "/dashboard");
+    const header = await page.locator("header").first().boundingBox();
+    const sidebar = await page.locator("aside").boundingBox();
+    expect(header?.x).toBe(0);
+    expect(header?.width).toBe(1280);
+    expect(sidebar?.y).toBeGreaterThanOrEqual((header?.y ?? 0) + (header?.height ?? 0) - 1);
   });
 
   test("TC-009 the profile form theme select applies immediately", async ({ page, context }) => {

@@ -1,5 +1,5 @@
 import vm from "node:vm";
-import { render, renderHook, screen, waitFor, act } from "@testing-library/react";
+import { render, renderHook, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthCard } from "@/features/auth/AuthCard";
@@ -49,20 +49,21 @@ beforeEach(() => {
 });
 
 describe("TC-009 theme (FR-24)", () => {
-  it("TC-009 reads the stored choice, falling back to system", () => {
-    expect(readTheme()).toBe("system");
-    window.localStorage.setItem(THEME_KEY, "dark");
+  it("TC-009 reads the stored choice, falling back to dark", () => {
+    expect(readTheme()).toBe("dark");
+    window.localStorage.setItem(THEME_KEY, "light");
+    expect(readTheme()).toBe("light");
+    window.localStorage.setItem(THEME_KEY, "system");
     expect(readTheme()).toBe("dark");
     window.localStorage.setItem(THEME_KEY, "purple");
-    expect(readTheme()).toBe("system");
+    expect(readTheme()).toBe("dark");
   });
 
-  it("TC-009 resolves system to the OS preference", () => {
-    matchMedia(true);
-    expect(resolveTheme("system")).toBe("dark");
-    expect(resolveTheme("light")).toBe("light");
+  it("TC-009 resolves every stored value to light or dark, never following the OS", () => {
     matchMedia(false);
-    expect(resolveTheme("system")).toBe("light");
+    expect(resolveTheme("system")).toBe("dark");
+    expect(resolveTheme("dark")).toBe("dark");
+    expect(resolveTheme("light")).toBe("light");
   });
 
   it("TC-009 the no-flash script sets data-theme before paint from storage or the OS", () => {
@@ -73,7 +74,10 @@ describe("TC-009 theme (FR-24)", () => {
     runThemeScript();
     expect(document.documentElement.dataset["theme"]).toBe("light");
     window.localStorage.removeItem(THEME_KEY);
-    matchMedia(true);
+    matchMedia(false);
+    runThemeScript();
+    expect(document.documentElement.dataset["theme"]).toBe("dark");
+    window.localStorage.setItem(THEME_KEY, "system");
     runThemeScript();
     expect(document.documentElement.dataset["theme"]).toBe("dark");
   });
@@ -82,7 +86,7 @@ describe("TC-009 theme (FR-24)", () => {
     const Probe = () => {
       const { theme, setTheme } = useTheme();
       return (
-        <button type="button" onClick={() => setTheme("dark")}>
+        <button type="button" onClick={() => setTheme("light")}>
           {theme}
         </button>
       );
@@ -92,24 +96,11 @@ describe("TC-009 theme (FR-24)", () => {
         <Probe />
       </ThemeProvider>,
     );
-    await waitFor(() => expect(document.documentElement.dataset["theme"]).toBe("light"));
-    await userEvent.click(screen.getByRole("button", { name: "system" }));
-    expect(await screen.findByRole("button", { name: "dark" })).toBeInTheDocument();
-    expect(document.documentElement.dataset["theme"]).toBe("dark");
-    expect(window.localStorage.getItem(THEME_KEY)).toBe("dark");
-  });
-
-  it("TC-009 the system theme follows OS changes live", async () => {
-    const listeners = matchMedia(false);
-    render(
-      <ThemeProvider>
-        <p>x</p>
-      </ThemeProvider>,
-    );
-    await waitFor(() => expect(document.documentElement.dataset["theme"]).toBe("light"));
-    matchMedia(true);
-    act(() => listeners.forEach((fn) => fn()));
-    expect(document.documentElement.dataset["theme"]).toBe("dark");
+    await waitFor(() => expect(document.documentElement.dataset["theme"]).toBe("dark"));
+    await userEvent.click(screen.getByRole("button", { name: "dark" }));
+    expect(await screen.findByRole("button", { name: "light" })).toBeInTheDocument();
+    expect(document.documentElement.dataset["theme"]).toBe("light");
+    expect(window.localStorage.getItem(THEME_KEY)).toBe("light");
   });
 
   it("TC-009 useTheme outside its provider is a programming error", () => {
@@ -149,9 +140,11 @@ describe("TC-004 session handling", () => {
   it("TC-004 an anonymous visitor on a protected page is redirected to login with ?next=", async () => {
     nav.pathname = "/tasks";
     render(
-      <AuthProvider>
-        <Probe />
-      </AuthProvider>,
+      <ThemeProvider>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </ThemeProvider>,
     );
     expect(await screen.findByText("status:unauthenticated")).toBeInTheDocument();
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/login?next=%2Ftasks"));
@@ -160,20 +153,24 @@ describe("TC-004 session handling", () => {
   it("TC-004 public pages do not redirect an anonymous visitor", async () => {
     nav.pathname = "/register";
     render(
-      <AuthProvider>
-        <Probe />
-      </AuthProvider>,
+      <ThemeProvider>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </ThemeProvider>,
     );
     await screen.findByText("status:unauthenticated");
     expect(nav.replace).not.toHaveBeenCalled();
   });
 
   it("TC-004 logging in authenticates, and logging out clears the session with a full page load", async () => {
-    nav.pathname = "/";
+    nav.pathname = "/dashboard";
     render(
-      <AuthProvider>
-        <Probe />
-      </AuthProvider>,
+      <ThemeProvider>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </ThemeProvider>,
     );
     await screen.findByText("status:unauthenticated");
     await userEvent.click(screen.getByRole("button", { name: "in" }));
@@ -188,12 +185,29 @@ describe("TC-004 session handling", () => {
     window.localStorage.setItem("devdash_session_user_id", "user-1");
     nav.pathname = "/login";
     render(
-      <AuthProvider>
-        <Probe />
-      </AuthProvider>,
+      <ThemeProvider>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </ThemeProvider>,
     );
     await screen.findByText("status:authenticated");
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/dashboard"));
+  });
+
+  it("TC-004 a signed-in visitor on /login with ?next= is sent there, not to the dashboard", async () => {
+    document.cookie = "mock_session=user-1";
+    window.localStorage.setItem("devdash_session_user_id", "user-1");
+    nav.pathname = "/login";
+    nav.search = new URLSearchParams("next=%2Ftasks");
+    render(
+      <ThemeProvider>
+        <AuthProvider>
+          <Probe />
+        </AuthProvider>
+      </ThemeProvider>,
+    );
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/tasks"));
   });
 
   it("TC-004 useAuth outside its provider is a programming error", () => {
@@ -205,9 +219,11 @@ describe("TC-100 services provider", () => {
   it("TC-100 hands features the service interfaces for the selected scenario", async () => {
     nav.search = new URLSearchParams("scenario=empty");
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthProvider>
-        <ServicesProvider>{children}</ServicesProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ServicesProvider>{children}</ServicesProvider>
+        </AuthProvider>
+      </ThemeProvider>
     );
     const { result } = renderHook(() => useServices(), { wrapper });
     const page = await result.current.projects.list(emptyProjectQuery());

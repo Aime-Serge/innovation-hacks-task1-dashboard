@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { sessionMarkerName } from "@/lib/session/marker";
 
-// Redirect away from these if a mock session already exists.
-const AUTH_ENTRY_PATHS = ["/login", "/register"];
-// Never require a session, and never redirect away regardless of one.
-const ALWAYS_PUBLIC_PATHS = ["/forgot-password", "/reset-password"];
+// These pages remain accessible with or without a session, so the welcome page can always lead
+// to login and the login form can always lead to registration.
+const ALWAYS_PUBLIC_PATHS = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
 
 /** NFR-16: a fresh nonce per request, so script-src needs no 'unsafe-inline'. */
 export function contentSecurityPolicy(nonce: string, dev: boolean): string {
@@ -11,7 +11,10 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'${dev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'nonce-${nonce}'`,
-    "img-src 'self' data:",
+    // https: is a profile photo pasted as a link (ADR-426); its host cannot be known in advance.
+    "img-src 'self' data: https:",
+    "connect-src 'self'", // the browser talks only to this origin (ADR-401, NFR-416)
+    "object-src 'none'",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -23,17 +26,18 @@ export function contentSecurityPolicy(nonce: string, dev: boolean): string {
 // before the client-side redirect; it is not an authorization control (ADR-010).
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuthEntry = AUTH_ENTRY_PATHS.includes(pathname);
-  const isPublic = isAuthEntry || ALWAYS_PUBLIC_PATHS.includes(pathname);
-  const hasSession = request.cookies.has("mock_session");
+  // The server layer answers its own calls: it needs no session to log in or register, and the
+  // API authenticates every other call itself, so a redirect to a page would only break them.
+  if (pathname.startsWith("/api/bff/")) return NextResponse.next();
+  const isPublic = ALWAYS_PUBLIC_PATHS.includes(pathname);
+  // The marker holds no token: it only says a session exists (ADR-425). The API still checks it.
+  const hasSession = request.cookies.has(sessionMarkerName());
 
   if (!isPublic && !hasSession) {
     const url = new URL("/login", request.url);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
-  if (isAuthEntry && hasSession) return NextResponse.redirect(new URL("/", request.url));
-
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const csp = contentSecurityPolicy(nonce, process.env.NODE_ENV === "development");
   const headers = new Headers(request.headers);
@@ -45,6 +49,9 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // robots.txt must stay public so crawlers get the file, not the login page.
-  matcher: [{ source: "/((?!_next/static|_next/image|favicon.ico|robots.txt).*)" }],
+  // robots.txt, the logo and the app icon must stay public: a crawler, an unauthenticated
+  // login/register page, and the browser's own favicon request all need them unguarded.
+  matcher: [
+    { source: "/((?!_next/static|_next/image|favicon.ico|robots.txt|logo.png|icon.png).*)" },
+  ],
 };

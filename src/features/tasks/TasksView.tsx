@@ -1,8 +1,9 @@
 "use client";
 
 import { array } from "zod/mini";
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { PageHeader } from "@/layout/PageHeader";
+import { useCreateIntent } from "../shared/useCreateIntent";
 import { t, tCount } from "@/i18n";
 import { Priority, TaskStatus, type TaskSort } from "@/schemas";
 import { Button } from "@/ui/Button";
@@ -15,6 +16,7 @@ import { useProjects, useTasks, useUpdateTaskStatus, useUsers } from "../data/ho
 import { emptyProjectQuery } from "@/schemas";
 import { TaskFormDialog } from "./TaskFormDialog";
 import { TaskList } from "./TaskList";
+import { useTaskDeletion } from "./useTaskDeletion";
 import { useTaskQuery } from "./useTaskQuery";
 
 const SORTS: readonly TaskSort[] = ["due_date", "priority", "title"];
@@ -22,10 +24,11 @@ const SORTS: readonly TaskSort[] = ["due_date", "priority", "title"];
 /** FR-15..19: search, filter, sort, optimistic status change, all URL-synced. */
 export function TasksView() {
   const { query, update, clear, filtered } = useTaskQuery();
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useCreateIntent();
   const toast = useToast();
   const tasks = useTasks(query);
   const projects = useProjects(emptyProjectQuery());
+  const deletion = useTaskDeletion(projects.data?.items ?? []);
   const users = useUsers();
   const changeStatus = useUpdateTaskStatus(() => toast.notify("error", t("task.statusFailed")));
   const { mutate } = changeStatus;
@@ -99,6 +102,8 @@ export function TasksView() {
         {tasks.data === undefined ? "" : tCount("tasks.count", tasks.data.total)}
       </p>
       <TaskList
+        onDelete={deletion.requestDelete}
+        canDelete={deletion.canDelete}
         status={tasks.isPending ? "loading" : tasks.isError ? "error" : "success"}
         tasks={tasks.data?.items}
         projects={projectItems}
@@ -109,6 +114,7 @@ export function TasksView() {
         onCreate={() => setCreating(true)}
         onStatusChange={changeStatusOf}
       />
+      {deletion.dialog}
       <TaskFormDialog
         open={creating}
         onOpenChange={setCreating}

@@ -3,23 +3,47 @@
 import { useAuth } from "@/providers/AuthProvider";
 import { t } from "@/i18n";
 import { Avatar } from "@/ui/Avatar";
-import { DropdownMenu } from "@/ui/DropdownMenu";
+import { RichMenu } from "@/ui/RichMenu";
 
+/** Avatar menu: who you are, your pages, log out (the account menu of the header).
+ * MF-18, S-C: the header block shows the display headline, never the email. */
 export function UserMenu() {
   const { user, logout } = useAuth();
   if (user === null) return null;
+  const headline = user.profile?.displayHeadline ?? null;
   return (
-    <DropdownMenu
-      items={[{ value: "logout", label: t("auth.logout") }]}
-      onSelect={() => void logout()}
+    <RichMenu
+      onAction={() => void logout()}
+      entries={[
+        {
+          kind: "header",
+          content: (
+            <span className="flex items-center gap-3">
+              <Avatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">{user.name}</span>
+                {headline !== null && (
+                  <span className="block truncate text-xs font-normal text-muted">{headline}</span>
+                )}
+              </span>
+            </span>
+          ),
+        },
+        { kind: "separator" },
+        { kind: "link", href: "/profile", label: t("nav.profile"), icon: "user" },
+        { kind: "link", href: "/projects", label: t("nav.projects"), icon: "folder" },
+        { kind: "link", href: "/tasks", label: t("nav.tasks"), icon: "tasks" },
+        { kind: "link", href: "/settings", label: t("nav.settings"), icon: "monitor" },
+        { kind: "separator" },
+        { kind: "action", value: "logout", label: t("auth.logout"), icon: "logout" },
+      ]}
       trigger={
         <button
           type="button"
           aria-label={t("layout.userMenu", { name: user.name })}
-          className="touch-target flex items-center gap-2 rounded-md p-1 hover:bg-subtle"
+          className="touch-target flex items-center rounded-full p-0.5 hover:bg-subtle"
         >
-          <Avatar name={user.name} size="sm" />
-          <span className="hidden max-w-40 truncate text-sm sm:inline">{user.name}</span>
+          <Avatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
         </button>
       }
     />
