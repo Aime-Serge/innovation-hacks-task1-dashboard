@@ -47,7 +47,7 @@
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-react": "7.37.5",
     "jiti": "2.7.0",
-    "jsdom": "30.0.1",
+    "jsdom": "31.0.1",
     "lighthouse": "13.6.0",
     "openapi-typescript": "7.13.0",
     "prettier": "3.10.1",
